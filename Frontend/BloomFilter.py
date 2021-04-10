@@ -24,6 +24,11 @@ class DailyBloomFilter(BloomFilter):
         self.age += 1
 
 
+class BloomFilter:
+    def __init__(self, name):
+        self.name = name
+
+
 class QueryBloomFilter(BloomFilter):
     def __init__(self, name):
         super().__init__(name)
@@ -33,4 +38,4 @@ class QueryBloomFilter(BloomFilter):
 class ContactBloomFilter(BloomFilter):
     def __init__(self, name, dbfs):
         super().__init__(name)
-        self.bit_array.append(dbfs)  # TODO: will need more logic to handle this
+        # self.bit_array.append(dbfs)  # TODO: will need more logic to handle this
