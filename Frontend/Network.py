@@ -1,6 +1,7 @@
 # ========================= Imports ========================= #
 
 import socket
+import threading
 import requests
 import time
 import EphID
@@ -9,58 +10,80 @@ import EphID
 
 PORT = 2048
 IP_RANGE = '192.168.4.1/24'
-IP_LISTNER = '192.168.4.25' # This machines IP
+IP_LISTENER = '100.95.249.235'  # This machines IP
+
+
+# ========================= Network Runner ========================= #
+
+class NetworkRunner(threading.Thread):
+    def __init__(self, name):
+        threading.Thread.__init__(self)
+        self.name = name
+
+    def run(self):
+        print("Starting " + self.name)
+        receive_shares()
+        print("Exiting " + self.name)
+
 
 # ========================= Functions ========================= #
 
 '''
-Handels broadcasting of EphID shares.
+Handles broadcasting of EphID shares.
 Will be run by a thread
 '''
-def broadcast_share(share):
 
-    # Brodcast one share/10s
+
+def broadcast_share(share):
+    # TODO: work out how to broadcast along the whole IP address block
+
+    # Broadcast one share/10s
     time.sleep(10)
     return broadcast_share(share)
 
 
 '''
-Handel reciving shares of EphIDs.
-Will be run by a runner thread indefinetly.
+Handel receiving shares of EphIDs.
+Will be run by a runner thread indefinitely.
 
 TODO: 
 
     - If multiple senders are involved will need to track multiple share groups
         one per sender
-    - The metric is at least n shares (n = 3) should the share buffer be whiped then 
-        after reciving n shares ? 
+    - The metric is at least n shares (n = 3) should the share buffer be whipped then 
+        after receiving n shares ? 
 '''
-def recive_shares():
-    shares = [] # Store buffer of recived shares
+
+
+def receive_shares():
+    shares = []  # Store buffer of recived shares
 
     ####### - Initialise Listener - #######
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(IP_LISTNER, PORT)
+    listener = (IP_LISTENER, PORT)
+    sock.bind(listener)
 
-    print(f"[>>] Listner is live IP <{IP_LISTNER}> PORT <{PORT}>")
+    print(f"[>>] Listener is live IP <{IP_LISTENER}> PORT <{PORT}>")
 
     while True:
         try:
-            packet, sender = sock.recvfrom(4096) # Recive share in 4069 bit buffer??
+            packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
             share = packet.decode('utf-8')  # TODO: decode from b64 || hex
-            print(f"[>>] Recived Share => {share}")
+            print(f"[>>] Received Share => {share}")
             shares.append(share)
             if len(shares) >= 3:
                 EphID.reconstruct_shares(shares)
-                shares = [] # reset shares buffer
+                shares = []  # reset shares buffer
         except:
-            print("[>> Reciver died, attempting restart ...")
-            recive_shares()
+            print("[>>] Receiver died, attempting restart ...")
+            receive_shares()
 
 
 '''
-Handels sending CBFs || QBFs to the backend api.
+Handles sending CBFs || QBFs to the backend api.
 '''
+
+
 def send_bloom_filter():
     return

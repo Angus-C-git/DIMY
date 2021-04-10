@@ -16,3 +16,8 @@ class EphID:
     def broadcast_shares(self):
         return
 
+
+
+def reconstruct_shares(shares):
+    print(f"[>>] Reconstructing shares {shares}")
+    return shares

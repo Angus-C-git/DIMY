@@ -1,10 +1,35 @@
 import BloomFilter
+import Network
+# import threading
+from threading import Thread
+
+
+def test_threads():
+    receiver_thread = Thread(target=Network.receive_shares(), args=())
+    receiver_thread.daemon = True
+    receiver_thread.start()
+
 
 '''
 TEST CODE ONLY
 '''
+
+
 def run_tests():
     print("[>>] Running tests in debug mode, pray ...\n")
+
+    print("=" * 10, "Networking Tests", "=" * 10)
+    print(f"[**] Spinning up receiver threads")
+
+    receiver_thread_1 = Network.NetworkRunner("receiver_thread_1")
+    # receiver_thread_2 = Network.NetworkRunner("receiver_thread_2")
+    receiver_thread_1.start()
+    # receiver_thread_2.start()
+
+    print("[**] Spinning up broadcast threads")
+
+    receiver_thread_1.join()
+    # receiver_thread_2.join()
 
     print("=" * 10, "DBF Tests", "=" * 10)
     print("[**] Creating DBF")
@@ -17,11 +42,9 @@ def run_tests():
 
 def main():
     print("[>>] Running DIMY\n")
-
-    ############# TESTS #############
+    # ============ TESTS ===========
     run_tests()
     ################################
-
 
 
 if __name__ == '__main__':
