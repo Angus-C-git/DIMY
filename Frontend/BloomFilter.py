@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Static helper function to generate bf entries
 def generate_bloom_hash(entry):
     return "hash" + entry
@@ -23,14 +24,32 @@ class DailyBloomFilter(BloomFilter):
     def update_age(self):
         self.age += 1
 
+=======
+class BloomFilter:
+    def __init__(self, name):
+        self.name = name
+
+
+class DailyBloomFilter(BloomFilter):
+    def __init__(self, name):
+        super().__init__(name)
+
+>>>>>>> Stashed changes
 
 class QueryBloomFilter(BloomFilter):
     def __init__(self, name):
         super().__init__(name)
 
 
+<<<<<<< Updated upstream
 # Combine DBFs into a CBF
 class ContactBloomFilter(BloomFilter):
     def __init__(self, name, dbfs):
         super().__init__(name)
         self.bit_array.append(dbfs)  # TODO: will need more logic to handle this
+=======
+class ContactBloomFilter(BloomFilter):
+    def __init__(self, name):
+        super().__init__(name)
+
+>>>>>>> Stashed changes
