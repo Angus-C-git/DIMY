@@ -3,6 +3,8 @@ import BloomFilter
 '''
 TEST CODE ONLY
 '''
+
+
 def run_tests():
     print("[>>] Running tests in debug mode, pray ...\n")
 
@@ -21,7 +23,6 @@ def main():
     ############# TESTS #############
     run_tests()
     ################################
-
 
 
 if __name__ == '__main__':
