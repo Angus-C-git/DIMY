@@ -2,4 +2,7 @@
 
 Digital Contact Tracing Protocol using UDP/TCP.
 
-![DIMY overview](images/DIMYOverviewDiagram.svg)
+
+## Overview
+
+![DIMY Protocol Overview](./images/DIMYOverviewDiagram.svg)
