@@ -19,17 +19,23 @@ def run_tests():
     print("[>>] Running tests in debug mode, pray ...\n")
 
     print("=" * 10, "Networking Tests", "=" * 10)
+
+    print(f"[**] Sending QBF with garbage data")
+    Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+    print(f"[**] Sending CBF with garbage data")
+    Network.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+
     print(f"[**] Spinning up receiver threads")
 
-    receiver_thread_1 = Network.NetworkRunner("receiver_thread_1")
-    # receiver_thread_2 = Network.NetworkRunner("receiver_thread_2")
+    receiver_thread_1 = Network.ReceiverRunner("receiver_thread_1")
     receiver_thread_1.start()
-    # receiver_thread_2.start()
 
     print("[**] Spinning up broadcast threads")
-
+    broadcast_thread = Network.BroadcastRunner("broadcast_thread")
+    broadcast_thread.start()
+    # TODO: Threads run indefinitely
     receiver_thread_1.join()
-    # receiver_thread_2.join()
+    broadcast_thread.join()
 
     print("=" * 10, "DBF Tests", "=" * 10)
     print("[**] Creating DBF")
