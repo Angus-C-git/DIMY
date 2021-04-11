@@ -11,12 +11,13 @@ def test_threads():
 
 
 '''
-TEST CODE ONLY
+Test Driver for DIMY functions.
 '''
 
 
 def run_tests():
-    print("[>>] Running tests in debug mode, pray ...\n")
+
+    print("[>>] Running tests, pray ...\n")
 
     print("=" * 10, "Networking Tests", "=" * 10)
 

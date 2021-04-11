@@ -5,12 +5,14 @@ import threading
 import requests
 import time
 import EphID
+from Resolve import get_host_ip
 
 # ========================= Middlewares ========================= #
 
+# TODO: Replace hardcoded values
 PORT = 2048
 IP_RANGE = '192.168.4.1/24'
-IP_LISTENER = '100.95.246.104'  # This machines IP
+IP_LISTENER = get_host_ip()  # This machines IP
 
 
 # ========================= Networking Runners ========================= #
@@ -83,7 +85,8 @@ def receive_shares():
     listener = (IP_LISTENER, PORT)
     sock.bind(listener)
 
-    print(f"[>>] Listener is live IP <{IP_LISTENER}> PORT <{PORT}>")
+    print(f"[>>] Listener is live IP: <{IP_LISTENER}> PORT: <{PORT}>")
+    print(f"[>>] Hostname: {socket.gethostname()}")
 
     while True:
         try:
