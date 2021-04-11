@@ -18,36 +18,40 @@ IP_LISTENER = get_host_ip()  # This machines IP
 # ========================= Networking Runners ========================= #
 
 class ReceiverRunner(threading.Thread):
-    def __init__(self, name):
+    def __init__(self, name, test_mode):
         threading.Thread.__init__(self)
         self.name = name
+        self.test_mode = test_mode
 
     def run(self):
         print("[>>] Starting " + self.name)
-        receive_shares()
+        receive_shares(self.test_mode)
         print("[>>] Exiting " + self.name)
+        return
 
 
 class BroadcastRunner(threading.Thread):
-    def __init__(self, name):
+    def __init__(self, name, test_mode):
         threading.Thread.__init__(self)
         self.name = name
+        self.test_mode = test_mode
 
     def run(self):
         print("[>>] Starting " + self.name)
-        broadcast_share("tmp_share")  # TODO: get from function
+        broadcast_share("tmp_share", self.test_mode, 0)  # TODO: get from function
         print("[>>] Exiting " + self.name)
+        return
 
 
 # ========================= Functions ========================= #
 
 '''
 Handles broadcasting of EphID shares.
-Will be run by a thread
+Will be run by a thread.
 '''
 
 
-def broadcast_share(share):
+def broadcast_share(share, test_mode, cnt):
     try:
         # TODO: work out how to broadcast along the whole IP address block
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
@@ -55,12 +59,17 @@ def broadcast_share(share):
         # tmp_share = "some_share_n"
         print(f"[>>] Sending share {share}")
         sock.sendto(share.encode('utf=8'), (IP_LISTENER, PORT))
+        if test_mode:
+            cnt += 1
+            if cnt >= 3:
+                return
+
         # Broadcast one share/10s
         time.sleep(10)
-        return broadcast_share(share)
+        return broadcast_share(share, test_mode, cnt)
     except:
         print("[>>] Broadcaster died, attempting restart")
-        return broadcast_share(share)
+        return broadcast_share(share, test_mode, cnt)
 
 
 '''
@@ -76,7 +85,7 @@ TODO:
 '''
 
 
-def receive_shares():
+def receive_shares(test_mode):
     shares = []  # Store buffer of received shares
 
     #    - Initialise Listener -    #
@@ -97,9 +106,11 @@ def receive_shares():
             if len(shares) >= 3:
                 EphID.reconstruct_shares(shares)
                 shares = []  # reset shares buffer
+                if test_mode:
+                    return
         except:
             print("[>>] Receiver died, attempting restart ...")
-            receive_shares()
+            receive_shares(test_mode)
 
 
 '''

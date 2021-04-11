@@ -1,5 +1,8 @@
 import BloomFilter
 import EphID
+import Network
+
+import time
 
 '''
 Test Driver for DIMY functions.
@@ -27,7 +30,23 @@ def run_tests():
         print(f"[**] Created EphID: {eph_id.eph_id}")
         print("=" * (20 + len(" EphID Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
-    
+
+    if test_selection == 2 or test_selection == 5:
+        print("=" * 10, "Shamir Test", "=" * 10)
+
+        print(f"[**] Spinning up threads")
+
+        receiver_thread_1 = Network.ReceiverRunner("RECEIVER_THREAD", 1)
+        receiver_thread_1.start()
+
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", 1)
+        broadcast_thread.start()
+
+        receiver_thread_1.join()
+        broadcast_thread.join()
+        print("=" * (20 + len(" Shamir Test ")), "\n")
+        run_tests() if test_selection != 5 else None  # test done
+
     if test_selection == 4 or test_selection == 5:
         print("=" * 11, "DBF Tests", "=" * 11)
         print("[**] Creating DBF")
@@ -36,8 +55,17 @@ def run_tests():
         print(f"[**] Updating {dbf_1.name}'s age")
         dbf_1.update_age()
         print(f"[**] {dbf_1.name} AGE: {dbf_1.age}")
+
+        print(f"[**] Sending CBF with garbage data")
+        Network.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+
+        print(f"[**] Sending QBF with garbage data")
+        Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+
         print("=" * (22 + len(" DBF Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
+
+    print("[>>] Finished tests!")
 
 
 def main():
