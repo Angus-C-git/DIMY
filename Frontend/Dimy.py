@@ -1,13 +1,6 @@
 import BloomFilter
 import EphID
 
-
-def test_threads():
-    receiver_thread = Thread(target=Network.receive_shares(), args=())
-    receiver_thread.daemon = True
-    receiver_thread.start()
-
-
 '''
 Test Driver for DIMY functions.
 '''
@@ -34,7 +27,7 @@ def run_tests():
         print(f"[**] Created EphID: {eph_id.eph_id}")
         print("=" * (20 + len(" EphID Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
-
+    
     if test_selection == 4 or test_selection == 5:
         print("=" * 11, "DBF Tests", "=" * 11)
         print("[**] Creating DBF")
