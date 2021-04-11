@@ -1,7 +1,5 @@
 import BloomFilter
-import Network
-# import threading
-from threading import Thread
+import EphID
 
 
 def test_threads():
@@ -16,42 +14,44 @@ Test Driver for DIMY functions.
 
 
 def run_tests():
+    print("=" * 10, " Select a test suite ", "=" * 10, "\n")
+    print("[1] EphID Test")
+    print("[2] Broadcast / Receive shares test")
+    print("[3] EncID Exchange test")
+    print("[4] Bloom Filter tests")
+    print("[5] Full Operations Test (Requires secondary client)")
+    print("[6] Quit")
+    test_selection = int(input("[>>] "))
 
-    print("[>>] Running tests, pray ...\n")
+    None if test_selection != 6 else exit(0)
 
-    print("=" * 10, "Networking Tests", "=" * 10)
+    print("\n[>>] Running tests, pray ...\n")
 
-    print(f"[**] Sending QBF with garbage data")
-    Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
-    print(f"[**] Sending CBF with garbage data")
-    Network.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+    if test_selection == 1 or test_selection == 5:
+        print("=" * 10, "EphID Tests", "=" * 10)
+        print("[**] Generating new EphID")
+        eph_id = EphID.EphID()
+        print(f"[**] Created EphID: {eph_id.eph_id}")
+        print("=" * (20 + len(" EphID Tests ")), "\n")
+        run_tests() if test_selection != 5 else None  # test done
 
-    print(f"[**] Spinning up receiver threads")
-
-    receiver_thread_1 = Network.ReceiverRunner("receiver_thread_1")
-    receiver_thread_1.start()
-
-    print("[**] Spinning up broadcast threads")
-    broadcast_thread = Network.BroadcastRunner("broadcast_thread")
-    broadcast_thread.start()
-    # TODO: Threads run indefinitely
-    receiver_thread_1.join()
-    broadcast_thread.join()
-
-    print("=" * 10, "DBF Tests", "=" * 10)
-    print("[**] Creating DBF")
-    dbf_1 = BloomFilter.DailyBloomFilter("DBF1")
-    print(f"[**] Created {dbf_1.name}")
-    print(f"[**] Updating {dbf_1.name}'s age")
-    dbf_1.update_age()
-    print(f"[**] {dbf_1.name} AGE: {dbf_1.age}")
+    if test_selection == 4 or test_selection == 5:
+        print("=" * 11, "DBF Tests", "=" * 11)
+        print("[**] Creating DBF")
+        dbf_1 = BloomFilter.DailyBloomFilter("DBF1")
+        print(f"[**] Created {dbf_1.name}")
+        print(f"[**] Updating {dbf_1.name}'s age")
+        dbf_1.update_age()
+        print(f"[**] {dbf_1.name} AGE: {dbf_1.age}")
+        print("=" * (22 + len(" DBF Tests ")), "\n")
+        run_tests() if test_selection != 5 else None  # test done
 
 
 def main():
     print("[>>] Running DIMY\n")
-    # ============ TESTS ===========
+    # ========== TESTS ============ #
     run_tests()
-    ################################
+    #################################
 
 
 if __name__ == '__main__':
