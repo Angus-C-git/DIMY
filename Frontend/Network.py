@@ -1,4 +1,4 @@
-# ========================= Imports ========================= #
+# ============================= Imports ============================= #
 
 import socket
 import threading
@@ -7,15 +7,15 @@ import time
 import EphID
 from Resolve import get_host_ip
 
-# ========================= Middlewares ========================= #
+# ============================ Middlewares =========================== #
 
-# TODO: Replace hardcoded values
 PORT = 2048
 IP_RANGE = '192.168.4.1/24'
-IP_LISTENER = get_host_ip()  # This machines IP
+IP_LISTENER = get_host_ip()
+API_BASE = 'http://ec2-3-25-246-159.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
+# ======================== Networking Runners ======================== #
 
-# ========================= Networking Runners ========================= #
 
 class ReceiverRunner(threading.Thread):
     def __init__(self, name, test_mode):
@@ -31,19 +31,20 @@ class ReceiverRunner(threading.Thread):
 
 
 class BroadcastRunner(threading.Thread):
-    def __init__(self, name, test_mode):
+    def __init__(self, name, shares, test_mode):
         threading.Thread.__init__(self)
         self.name = name
         self.test_mode = test_mode
+        self.shares = shares
 
     def run(self):
         print("[>>] Starting " + self.name)
-        broadcast_share("tmp_share", self.test_mode, 0)  # TODO: get from function
+        broadcast_share(self.shares, self.test_mode, 0)  # TODO: get shares from function
         print("[>>] Exiting " + self.name)
         return
 
 
-# ========================= Functions ========================= #
+# ============================ Functions ============================ #
 
 '''
 Handles broadcasting of EphID shares.
@@ -51,14 +52,19 @@ Will be run by a thread.
 '''
 
 
-def broadcast_share(share, test_mode, cnt):
+def broadcast_share(shares, test_mode, cnt):
+    # If we have broadcast all the shares exit
+    if not shares:
+        return
+
     try:
         # TODO: work out how to broadcast along the whole IP address block
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
 
         # tmp_share = "some_share_n"
-        print(f"[>>] Sending share {share}")
-        sock.sendto(share.encode('utf=8'), (IP_LISTENER, PORT))
+        print(f"[>>] Sending share {shares[0]}")
+        sock.sendto(shares[0].encode('utf=8'), (IP_LISTENER, PORT))
+        shares.pop(0)  # remove the share we just broadcast
         if test_mode:
             cnt += 1
             if cnt >= 3:
@@ -66,10 +72,10 @@ def broadcast_share(share, test_mode, cnt):
 
         # Broadcast one share/10s
         time.sleep(10)
-        return broadcast_share(share, test_mode, cnt)
+        return broadcast_share(shares, test_mode, cnt)
     except:
         print("[>>] Broadcaster died, attempting restart")
-        return broadcast_share(share, test_mode, cnt)
+        return broadcast_share(shares, test_mode, cnt)
 
 
 '''
@@ -119,10 +125,9 @@ Handles sending CBFs || QBFs to the backend api.
 
 
 def send_cbf(cbf):
-    API_ENDPOINT = 'http://ec2-3-25-246-159.ap-southeast-2.compute.amazonaws.com:9000/comp4337/cbf/upload'
     try:
         CBF = {"CBF": cbf}
-        res = requests.post(API_ENDPOINT, json=CBF)
+        res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
         print(f"[>>] API RES => {res.json()}")
     except:
         print("[>>] Failed to upload CBF to API")
@@ -131,10 +136,9 @@ def send_cbf(cbf):
 
 
 def send_qbf(qbf):
-    API_ENDPOINT = 'http://ec2-3-25-246-159.ap-southeast-2.compute.amazonaws.com:9000/comp4337/qbf/query'
     try:
         QBF = {"QBF": qbf}
-        res = requests.post(API_ENDPOINT, json=QBF)
+        res = requests.post(f'{API_BASE}/qbf/query', json=QBF)
         print(f"[>>] API RES => {res.json()}")
     except:
         print("[>>] Failed to upload QBF to API")

@@ -39,7 +39,7 @@ def run_tests():
         receiver_thread_1 = Network.ReceiverRunner("RECEIVER_THREAD", 1)
         receiver_thread_1.start()
 
-        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", 1)
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", ["share_1", "share_2", "share_3", "share_4"], 1)
         broadcast_thread.start()
 
         receiver_thread_1.join()
