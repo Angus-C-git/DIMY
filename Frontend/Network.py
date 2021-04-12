@@ -4,13 +4,15 @@ import socket
 import threading
 import requests
 import time
+import mmh3
+import sslcrypto
 import EphID
 from Resolve import get_host_ip
 
 # ============================ Middlewares =========================== #
 
 PORT = 2048
-IP_RANGE = '192.168.4.1/24'
+BROADCAST_IP = '192.168.4.255'  # Broadcast address (send to all clients)
 IP_LISTENER = get_host_ip()
 # API_BASE = 'http://ec2-3-25-246-159.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
