@@ -103,6 +103,10 @@ class QueryBloomFilter(BloomFilter):
 # Combine DBFs into a CBF
 class ContactBloomFilter(BloomFilter):
     def __init__(self, name):
+        decision = str(input("Do you wish to upload your close contacts? Y/n")).lower()
+        if decision == 'n':
+            return
+
         super().__init__(name)
         print(f"[>>] Creating CBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
         # OR each dbfs bitarray into the cbf bit array
