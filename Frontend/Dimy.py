@@ -1,5 +1,6 @@
 import BloomFilter
 import EphID
+import random
 
 '''
 TEST CODE ONLY
@@ -31,14 +32,40 @@ def run_tests():
         run_tests() if test_selection != 5 else None  # test done
 
     if test_selection == 4 or test_selection == 5:
-        print("=" * 11, "DBF Tests", "=" * 11)
+        print("=" * 12, "BF Tests", "=" * 12)
+
+        # - DBF TESTS - #
+        print("[**] Starting DBF manager")
+        dbfRunner = BloomFilter.DBFManager("DBF_RUNNER_THREAD", 15)  # generate a new dbf every 15 sec
+        dbfRunner.start()
         print("[**] Creating DBF")
-        dbf_1 = BloomFilter.DailyBloomFilter("DBF1")
-        print(f"[**] Created {dbf_1.name}")
-        print(f"[**] Updating {dbf_1.name}'s age")
-        dbf_1.update_age()
-        print(f"[**] {dbf_1.name} AGE: {dbf_1.age}")
-        print("=" * (22 + len(" DBF Tests ")), "\n")
+        dbf = BloomFilter.DailyBloomFilter("DBF")
+        print(f"[**] Created {dbf.name}")
+        test_enc_id = '5122ccacfe'
+        print(f"[**] Encoding Encounter ID {test_enc_id}")
+        dbf.push(test_enc_id)
+        # TODO: DBF age is deprecated
+        print(f"[**] Updating {dbf.name}'s age")
+        dbf.update_age()
+        print(f"[**] {dbf.name} AGE: {dbf.age}")
+        # ---
+
+        # - CBF TESTS - #
+        print("[**] Creating 6 DBFs To Encode")
+
+        for dbf in range(0, 6):
+            # Create Objs
+            BloomFilter.DEVICE_DBFS.append(BloomFilter.DailyBloomFilter(f"DBF_{dbf}"))
+            print(f"[**] Adding DBF_{dbf}")
+            # Insert random encIds
+            BloomFilter.DEVICE_DBFS[dbf].push(str(hex(random.randint(10000, 400000)))[2:])
+
+        cbf = BloomFilter.ContactBloomFilter("CBF")
+        print("[**] Waiting ~15 seconds for DBF expiry test\n")
+
+        dbfRunner.join()  # TODO: this will never rejoin
+
+        print("=" * (22 + len(" bf Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
 
 
