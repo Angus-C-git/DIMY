@@ -1,9 +1,11 @@
 import BloomFilter
 import EphID
-import random
+import Network
+
+import time
 
 '''
-TEST CODE ONLY
+Test Driver for DIMY functions.
 '''
 
 
@@ -31,6 +33,22 @@ def run_tests():
         print("=" * (20 + len(" EphID Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
 
+    if test_selection == 2 or test_selection == 5:
+        print("=" * 10, "Shamir Test", "=" * 10)
+
+        print(f"[**] Spinning up threads")
+
+        receiver_thread_1 = Network.ReceiverRunner("RECEIVER_THREAD", 1)
+        receiver_thread_1.start()
+
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", ["share_1", "share_2", "share_3", "share_4"], 1)
+        broadcast_thread.start()
+
+        receiver_thread_1.join()
+        broadcast_thread.join()
+        print("=" * (20 + len(" Shamir Test ")), "\n")
+        run_tests() if test_selection != 5 else None  # test done
+
     if test_selection == 4 or test_selection == 5:
         print("=" * 12, "BF Tests", "=" * 12)
 
@@ -39,39 +57,26 @@ def run_tests():
         dbfRunner = BloomFilter.DBFManager("DBF_RUNNER_THREAD", 15)  # generate a new dbf every 15 sec
         dbfRunner.start()
         print("[**] Creating DBF")
-        dbf = BloomFilter.DailyBloomFilter("DBF")
-        print(f"[**] Created {dbf.name}")
-        test_enc_id = '5122ccacfe'
-        print(f"[**] Encoding Encounter ID {test_enc_id}")
-        dbf.push(test_enc_id)
-        # TODO: DBF age is deprecated
-        print(f"[**] Updating {dbf.name}'s age")
-        dbf.update_age()
-        print(f"[**] {dbf.name} AGE: {dbf.age}")
-        # ---
+        dbf_1 = BloomFilter.DailyBloomFilter("DBF1")
+        print(f"[**] Created {dbf_1.name}")
+        print(f"[**] Updating {dbf_1.name}'s age")
+        dbf_1.update_age()
+        print(f"[**] {dbf_1.name} AGE: {dbf_1.age}")
 
-        # - CBF TESTS - #
-        print("[**] Creating 6 DBFs To Encode")
+        print(f"[**] Sending CBF with garbage data")
+        Network.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
-        for dbf in range(0, 6):
-            # Create Objs
-            BloomFilter.DEVICE_DBFS.append(BloomFilter.DailyBloomFilter(f"DBF_{dbf}"))
-            print(f"[**] Adding DBF_{dbf}")
-            # Insert random encIds
-            BloomFilter.DEVICE_DBFS[dbf].push(str(hex(random.randint(10000, 400000)))[2:])
+        print(f"[**] Sending QBF with garbage data")
+        Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
-        cbf = BloomFilter.ContactBloomFilter("CBF")
-        print("[**] Waiting ~15 seconds for DBF expiry test\n")
-
-        dbfRunner.join()  # TODO: this will never rejoin
-
-        print("=" * (22 + len(" bf Tests ")), "\n")
+        print("=" * (22 + len(" DBF Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
+
+    print("[>>] Finished tests!")
 
 
 def main():
     print("[>>] Running DIMY\n")
-
     # ========== TESTS ============ #
     run_tests()
     #################################
