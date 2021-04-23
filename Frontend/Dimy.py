@@ -23,8 +23,10 @@ def run_tests():
     if test_selection == 1 or test_selection == 5:
         print("=" * 10, "EphID Tests", "=" * 10)
         print("[**] Generating new EphID")
-        eph_id = EphID.EphID()
-        print(f"[**] Created EphID: {eph_id.eph_id}")
+        eph_id_runner = EphID.EphIDRunner("EphIDRunner")
+        eph_id_runner.start()
+        # TODO: Thread never returns
+        eph_id_runner.join()
         print("=" * (20 + len(" EphID Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
 
