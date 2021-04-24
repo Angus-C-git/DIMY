@@ -5,38 +5,69 @@ import Network
 import time
 
 '''
+Print Banner Art
+
+
+
+_|_|_|    _|_|_|  _|      _|  _|      _|  
+_|    _|    _|    _|_|  _|_|    _|  _|    
+_|    _|    _|    _|  _|  _|      _|      
+_|    _|    _|    _|      _|      _|      
+_|_|_|    _|_|_|  _|      _|      _|      
+'''
+
+
+def print_banner():
+    space = 10
+    print(' ' * space, '_|_|_|    _|_|_|  _|      _|  _|      _|  ')
+    print(' ' * space, '_|    _|    _|    _|_|  _|_|    _|  _|    ')
+    print(' ' * space, '_|    _|    _|    _|  _|  _|      _|  ')
+    print(' ' * space, '_|    _|    _|    _|      _|      _|  ')
+    print(' ' * space, '_|_|_|    _|_|_|  _|      _|      _| ')
+
+
+'''
 Test Driver for DIMY functions.
 '''
 
 
 def run_tests():
     print("=" * 10, " Select a test suite ", "=" * 10, "\n")
+    print("[0] Rebind Port")
     print("[1] EphID Test")
     print("[2] Broadcast / Receive shares test")
     print("[3] EncID Exchange test")
     print("[4] Bloom Filter tests")
     print("[5] Full Operations Test (Requires secondary client)")
-    print("[6] Quit")
+    print("[6] EphID Core Exchange Test")
+    print("[7] Quit")
     test_selection = int(input("[>>] "))
 
-    None if test_selection != 6 else exit(0)
+    None if test_selection != 7 else exit(0)
 
     print("\n[>>] Running tests, pray ...\n")
 
     if test_selection == 1 or test_selection == 5:
         print("=" * 10, "EphID Tests", "=" * 10)
         print("[**] Generating new EphID")
-        eph_id_runner = EphID.EphIDRunner("EphIDRunner")
+        eph_id = EphID.EphID("EPH_ID")
+        eph_id_runner = EphID.EphIDRunner("EphIDRunner", eph_id)
         eph_id_runner.start()
         # TODO: Thread never returns
         eph_id_runner.join()
         print("=" * (20 + len(" EphID Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
 
+    if test_selection == 0:
+        Network.PORT = int(input("New Client Port: "))
+        run_tests()
+
     if test_selection == 2 or test_selection == 5:
         print("=" * 10, "Shamir Test", "=" * 10)
 
         print(f"[**] Spinning up threads")
+        # eph_id_runner = EphID.EphIDRunner("EPH_ID_THREAD")
+        # time.sleep(1)
 
         receiver_thread_1 = Network.ReceiverRunner("RECEIVER_THREAD", 1)
         receiver_thread_1.start()
@@ -72,14 +103,64 @@ def run_tests():
         print("=" * (22 + len(" DBF Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
 
+    if test_selection == 6 or test_selection == 5:
+        print("[**] Starting receiver ...")
+        receiver_thread_1 = Network.ReceiverRunner("RECEIVER_THREAD", 0)
+        receiver_thread_1.start()
+        print("[**] Starting EphID Runner ...")
+
+        eph_id = EphID.EphID("EPH_ID")
+        # print("[**]")
+        eph_id_runner = EphID.EphIDRunner("EPH_ID_THREAD", eph_id)
+        print(f"[**] Regenerating EphIDs every {eph_id_runner.eph_clock} seconds")
+
+        # print(f"[**] Shares: {eph_id_runner.n_shares}")
+        # Wait for shares to be generated
+        # while not eph_id_runner.n_shares:
+        #     continue
+
+        # TODO: resolve generation delay
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, 0)
+        broadcast_thread.start()
+
+        receiver_thread_1.join()
+        broadcast_thread.join()
+
     print("[>>] Finished tests!")
+
+
+def run_asst_cycle():
+    section_head = 30
+
+    print_banner()
+    print(f"\n\n[>>] Client Starting On Port {Network.PORT}, output is in 0xHex\n")
+
+    print('\n<', ':' * section_head, '[SEGMENT-1 :: TASK-1]', ':' * section_head, '>\n')
+
+    EPH_ID = EphID.EphID("EPH_ID")
+    print(f"[>>] Generated New EphID {EPH_ID.current_eph_id.hex()}")
+    print(f"[>>] EphID Hash {hex(EPH_ID.current_eph_id_hash)}")
+
+    print('\n<', ':' * section_head, '[SEGMENT-2 :: TASK-2]', ':' * section_head, '>\n')
+
+    print(f"[>>] EphID Shares:\n")
+
+    for share in EPH_ID.n_shares:
+        print(f"    ‣ {share}")
+
+    print('\n<', ':' * section_head, '[SEGMENT-3 :: TASK-3]', ':' * section_head, '>\n')
+
+    EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
+    EPH_RUNNER.start()
+    print("[>>] continued ...")
 
 
 def main():
     print("[>>] Running DIMY\n")
     # ========== TESTS ============ #
-    run_tests()
+    # run_tests()
     #################################
+    run_asst_cycle()
 
 
 if __name__ == '__main__':

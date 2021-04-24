@@ -14,8 +14,8 @@ from Resolve import get_host_ip
 PORT = 2048
 BROADCAST_IP = '192.168.4.255'  # Broadcast address (send to all clients)
 IP_LISTENER = get_host_ip()
-# API_BASE = 'http://ec2-3-25-246-159.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
+
 
 # ======================== Networking Runners ======================== #
 
@@ -66,7 +66,7 @@ def broadcast_share(shares, test_mode, cnt):
 
         # tmp_share = "some_share_n"
         print(f"[>>] Sending share {shares[0]}")
-        sock.sendto(shares[0].encode('utf=8'), (IP_LISTENER, PORT))
+        sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))
         shares.pop(0)  # remove the share we just broadcast
         if test_mode:
             cnt += 1
@@ -76,8 +76,9 @@ def broadcast_share(shares, test_mode, cnt):
         # Broadcast one share/10s
         time.sleep(10)
         return broadcast_share(shares, test_mode, cnt)
-    except:
-        print("[>>] Broadcaster died, attempting restart")
+    except Exception as e:
+        print(f"[>>] Broadcaster died, ERROR: {e} attempting restart")
+        time.sleep(10)
         return broadcast_share(shares, test_mode, cnt)
 
 
@@ -96,6 +97,7 @@ TODO:
 
 def receive_shares(test_mode):
     shares = []  # Store buffer of received shares
+    # The prime_mod is a fixed value for the shamir library necessary for reconstruction
 
     #    - Initialise Listener -    #
 
@@ -109,7 +111,7 @@ def receive_shares(test_mode):
     while True:
         try:
             packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
-            share = packet.decode('utf-8')  # TODO: decode from b64 || hex
+            share = packet.decode('ascii')  # TODO: decode from b64 || hex
             print(f"[>>] Received Share => {share}")
             shares.append(share)
             if len(shares) >= 3:
