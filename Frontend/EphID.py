@@ -11,7 +11,7 @@ murmur_hash = pyhash.murmur3_32()
 REGEN_CLOCK = 60  # Generate new EPhID Every Minute
 N_SHARES = 6
 K_FRAGMENTS = 3
-PRIME_MOD = '010000000000000000000000000000000000000000000000000000000000000000000000000000001b'
+PRIME_MOD = 2**607-1
 
 
 # ========================== Runner Class =========================== #
