@@ -7,6 +7,8 @@ import time
 import mmh3
 import sslcrypto
 import EphID
+import tinyec
+import secrets
 from Resolve import get_host_ip
 
 # ============================ Middlewares =========================== #
@@ -49,6 +51,25 @@ class BroadcastRunner(threading.Thread):
 
 
 # ============================ Functions ============================ #
+
+class Dh():
+    def __init__(self):
+        self.priv_key, self.pub_key = generate_dh()
+        self.shared_key = share_dh()
+        
+    def generate_dh():
+        # Save the curve, a particular curve used in ECDH
+        curve = tinyec.registry.get_curve('brainpoolP256r1')
+
+        priv_key = secrets.randbelow(curve.field.n)
+        pub_key = priv_key * curve.g # i dont know what curve g is dont ask me
+
+        return (priv_key, pub_key)
+
+    def share_dh():
+        # TODO: network sharing of public key
+        self.shared_key = rec_pub_key * self.priv_key
+
 
 '''
 Handles broadcasting of EphID shares.
