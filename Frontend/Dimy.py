@@ -4,6 +4,9 @@ import Network
 
 import time
 
+PROD = 0
+TEST = 1
+
 '''
 Print Banner Art
 
@@ -135,28 +138,34 @@ def run_asst_cycle():
     print_banner()
     print(f"\n\n[>>] Client Starting On Port {Network.PORT}, output is in 0xHex\n")
 
-    print('\n<', ':' * section_head, '[SEGMENT-1 :: TASK-1]', ':' * section_head, '>\n')
+    print('\n<', ':' * section_head, '[TASK-1 :: SEGMENT-1 :: A]', ':' * section_head, '>\n')
 
     EPH_ID = EphID.EphID("EPH_ID")
-    print(f"[>>] Generated New EphID {EPH_ID.current_eph_id.hex()}")
+    print(f"[>>] Generated New EphID: {EPH_ID.current_eph_id.hex()}")
     print(f"[>>] EphID Hash {hex(EPH_ID.current_eph_id_hash)}")
 
-    print('\n<', ':' * section_head, '[SEGMENT-2 :: TASK-2]', ':' * section_head, '>\n')
+    print('\n<', ':' * section_head, '[TASK-2 :: SEGMENT-2 :: A]', ':' * section_head, '>\n')
 
     print(f"[>>] EphID Shares:\n")
 
     for share in EPH_ID.n_shares:
         print(f"    ‣ {share}")
 
-    print('\n<', ':' * section_head, '[SEGMENT-3 :: TASK-3]', ':' * section_head, '>\n')
+    print('\n<', ':' * section_head, '[TASK-3 :: SEGMENT-3 :: A:B:C]', ':' * section_head, '>\n')
 
     EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
+    RECEIVER_SVR = Network.ReceiverRunner("RECEIVER_THREAD", PROD)
+    BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, PROD)
+
     EPH_RUNNER.start()
+    RECEIVER_SVR.start()
+    BROADCAST_SVR.start()
+
     print("[>>] continued ...")
 
 
 def main():
-    print("[>>] Running DIMY\n")
+    print("[>>] Running ...\n")
     # ========== TESTS ============ #
     # run_tests()
     #################################

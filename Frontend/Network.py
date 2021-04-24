@@ -11,11 +11,12 @@ from Resolve import get_host_ip
 
 # ============================ Middlewares =========================== #
 
-PORT = 2048
+PORT = 2049
 BROADCAST_IP = '192.168.4.255'  # Broadcast address (send to all clients)
 IP_LISTENER = get_host_ip()
 API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
+RECONSTRUCT_THRESHOLD = 3
 
 # ======================== Networking Runners ======================== #
 
@@ -27,9 +28,9 @@ class ReceiverRunner(threading.Thread):
         self.test_mode = test_mode
 
     def run(self):
-        print("[>>] Starting " + self.name)
+        # print("[>>] Starting " + self.name)
         receive_shares(self.test_mode)
-        print("[>>] Exiting " + self.name)
+        # print("[>>] Exiting " + self.name)
         return
 
 
@@ -41,8 +42,8 @@ class BroadcastRunner(threading.Thread):
         self.shares = shares
 
     def run(self):
-        print("[>>] Starting " + self.name)
-        broadcast_share(self.shares, self.test_mode, 0)  # TODO: get shares from function
+        # print("[>>] Starting " + self.name)
+        broadcast_share(self.shares, self.test_mode, 0)
         print("[>>] Exiting " + self.name)
         return
 
@@ -65,9 +66,10 @@ def broadcast_share(shares, test_mode, cnt):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
 
         # tmp_share = "some_share_n"
-        print(f"[>>] Sending share {shares[0]}")
-        sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))
-        shares.pop(0)  # remove the share we just broadcast
+        print(f"[>>] Sending share => {shares[0]}")
+        sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
+        # remove the share we just broadcast
+        shares.pop(0)
         if test_mode:
             cnt += 1
             if cnt >= 3:
@@ -105,22 +107,24 @@ def receive_shares(test_mode):
     listener = (IP_LISTENER, PORT)
     sock.bind(listener)
 
-    print(f"[>>] Listener is live IP: <{IP_LISTENER}> PORT: <{PORT}>")
-    print(f"[>>] Hostname: {socket.gethostname()}")
+    print(f"[>>] Listener is live IP: <{IP_LISTENER}> PORT: <{PORT}> Hostname: <{socket.gethostname()}>")
 
     while True:
         try:
             packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
-            share = packet.decode('ascii')  # TODO: decode from b64 || hex
-            print(f"[>>] Received Share => {share}")
+            share = packet.decode('ascii')
+            print(f"[>>] Received Share [{len(shares)+1}/6] <= {share}")
             shares.append(share)
-            if len(shares) >= 3:
+            # TODO:::: This is poor logic
+            if len(shares) == 3 or len(shares) == 6:
                 EphID.reconstruct_shares(shares)
-                shares = []  # reset shares buffer
+                if len(shares) == 6:
+                    shares = []  # reset shares buffer
+
                 if test_mode:
                     return
-        except:
-            print("[>>] Receiver died, attempting restart ...")
+        except Exception as err:
+            print(f"[>>] Receiver died, ERROR: {err}, attempting restart ...")
             receive_shares(test_mode)
 
 
