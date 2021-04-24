@@ -7,13 +7,13 @@ from bitarray import bitarray
 
 # =========================== Middlewares ============================ #
 
-BLOOM_SIZE = 800000                 # 100KB
-HASH_ROUNDS = 3                     # Compute 3 hashes for each entry
+BLOOM_SIZE = 800000  # 100KB
+HASH_ROUNDS = 3  # Compute 3 hashes for each entry
 fnv_hash = pyhash.fnv1_32()
 murmur_hash = pyhash.murmur3_32()
-DBF_EXPIRY = 6                      # Only store dbfs newer than this
+DBF_EXPIRY = 6  # Only store dbfs newer than this
 
-DEVICE_DBFS = []                    # The last index is the current DBF
+DEVICE_DBFS = []  # The last index is the current DBF
 # ============================ Functions ============================ #
 
 # TODO: work out how best to interact with the current DBF
@@ -42,6 +42,7 @@ def maintain_dbfs(dbf_clock):
     return maintain_dbfs(dbf_clock)
 
 
+# TODO: Need to seed these hashes
 def compute_hash_indexes(entry):
     print("[>>] Computing 3 rounds of murmur hash")
     indexes = []
@@ -110,4 +111,3 @@ class ContactBloomFilter(BloomFilter):
         super().__init__(name)
         print(f"[>>] Creating CBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
         # OR each dbfs bitarray into the cbf bit array
-

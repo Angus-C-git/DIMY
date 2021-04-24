@@ -17,6 +17,8 @@ IP_LISTENER = get_host_ip()
 API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
 RECONSTRUCT_THRESHOLD = 3
+BROADCAST_RATE = 10  # Broadcast one share/10 sec
+
 
 # ======================== Networking Runners ======================== #
 
@@ -29,21 +31,22 @@ class ReceiverRunner(threading.Thread):
 
     def run(self):
         # print("[>>] Starting " + self.name)
-        receive_shares(self.test_mode)
+        receive_advertisements(self.test_mode)
         # print("[>>] Exiting " + self.name)
         return
 
 
 class BroadcastRunner(threading.Thread):
-    def __init__(self, name, shares, test_mode):
+    def __init__(self, name, shares, advert_hash, test_mode):
         threading.Thread.__init__(self)
         self.name = name
         self.test_mode = test_mode
         self.shares = shares
+        self.advert_hash = advert_hash
 
     def run(self):
         # print("[>>] Starting " + self.name)
-        broadcast_share(self.shares, self.test_mode, 0)
+        broadcast_share(self.shares, self.advert_hash, self.test_mode, 0)
         print("[>>] Exiting " + self.name)
         return
 
@@ -56,7 +59,7 @@ Will be run by a thread.
 '''
 
 
-def broadcast_share(shares, test_mode, cnt):
+def broadcast_share(shares, advert_hash, test_mode, cnt):
     # If we have broadcast all the shares exit
     if not shares:
         return
@@ -67,7 +70,10 @@ def broadcast_share(shares, test_mode, cnt):
 
         # tmp_share = "some_share_n"
         print(f"[>>] Sending share => {shares[0]}")
-        sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
+        # TODO: TMP send hash
+        advertisement = f'{advert_hash}|{shares[0]}'
+        # sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
+        sock.sendto(advertisement.encode('ascii'), (IP_LISTENER, PORT))
         # remove the share we just broadcast
         shares.pop(0)
         if test_mode:
@@ -76,12 +82,12 @@ def broadcast_share(shares, test_mode, cnt):
                 return
 
         # Broadcast one share/10s
-        time.sleep(10)
-        return broadcast_share(shares, test_mode, cnt)
+        time.sleep(BROADCAST_RATE)
+        return broadcast_share(shares, advert_hash, test_mode, cnt)
     except Exception as e:
         print(f"[>>] Broadcaster died, ERROR: {e} attempting restart")
         time.sleep(10)
-        return broadcast_share(shares, test_mode, cnt)
+        return broadcast_share(shares, test_mode, advert_hash, cnt)
 
 
 '''
@@ -97,7 +103,7 @@ TODO:
 '''
 
 
-def receive_shares(test_mode):
+def receive_advertisements(test_mode):
     shares = []  # Store buffer of received shares
     # The prime_mod is a fixed value for the shamir library necessary for reconstruction
 
@@ -112,12 +118,15 @@ def receive_shares(test_mode):
     while True:
         try:
             packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
-            share = packet.decode('ascii')
-            print(f"[>>] Received Share [{len(shares)+1}/6] <= {share}")
+            advertisement = packet.decode('ascii')
+            # print(f'[>>] ADVERTISEMENT: {advertisement}')
+            advert_hash = advertisement[:10]
+            share = advertisement[11:]
+            print(f"[>>] Received Share [{len(shares) + 1}/6] <= {share}")
             shares.append(share)
             # TODO:::: This is poor logic
             if len(shares) == 3 or len(shares) == 6:
-                EphID.reconstruct_shares(shares)
+                EphID.reconstruct_shares(shares, advert_hash)
                 if len(shares) == 6:
                     shares = []  # reset shares buffer
 
@@ -125,7 +134,7 @@ def receive_shares(test_mode):
                     return
         except Exception as err:
             print(f"[>>] Receiver died, ERROR: {err}, attempting restart ...")
-            receive_shares(test_mode)
+            receive_advertisements(test_mode)
 
 
 '''

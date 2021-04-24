@@ -75,7 +75,7 @@ def run_tests():
         receiver_thread_1 = Network.ReceiverRunner("RECEIVER_THREAD", 1)
         receiver_thread_1.start()
 
-        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", ["share_1", "share_2", "share_3", "share_4"], 1)
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", ["share_1", "share_2", "share_3", "share_4"], "HASH", 1)
         broadcast_thread.start()
 
         receiver_thread_1.join()
@@ -123,7 +123,7 @@ def run_tests():
         #     continue
 
         # TODO: resolve generation delay
-        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, 0)
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, eph_id.current_eph_id_hash, 0)
         broadcast_thread.start()
 
         receiver_thread_1.join()
@@ -155,7 +155,7 @@ def run_asst_cycle():
 
     EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
     RECEIVER_SVR = Network.ReceiverRunner("RECEIVER_THREAD", PROD)
-    BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, PROD)
+    BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, EPH_ID.current_eph_id_hash, PROD)
 
     EPH_RUNNER.start()
     RECEIVER_SVR.start()
