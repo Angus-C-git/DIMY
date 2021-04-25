@@ -172,12 +172,14 @@ def run_asst_cycle():
     print('\n<', ':' * section_head, '[TASK-3 :: SEGMENT-3 :: A:B:C]', ':' * section_head, '>\n')
 
     EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
-    DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD")     # Override default for testing
+    DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD")           # Override default for testing
+    QBF_MANAGER = BloomFilter.QBFManager("QBF_MANAGER_THREAD", 300)     # Every 300 seconds send query
     RECEIVER_SVR = Network.ReceiverRunner("RECEIVER_THREAD", PROD)
     BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, EPH_ID.current_eph_id_hash, PROD)
 
     EPH_RUNNER.start()
     DBF_MANAGER.start()
+    QBF_MANAGER.start()
     RECEIVER_SVR.start()
     BROADCAST_SVR.start()
 

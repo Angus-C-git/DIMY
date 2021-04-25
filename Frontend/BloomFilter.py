@@ -4,9 +4,11 @@ import time
 import threading
 from datetime import datetime
 from bitarray import bitarray
-# from Network import send_qbf      # TODO::::: IMPORTING THIS KILLS IT CAUSE CHAIN FROM MAIN
+import requests
 
 # =========================== Middlewares ============================ #
+
+API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
 BLOOM_SIZE = 800000  # 100KB
 HASH_ROUNDS = 3  # Compute 3 hashes for each entry
@@ -51,7 +53,7 @@ def maintain_dbfs(dbf_clock):
 def upload_qbf(upload_clock):
     time.sleep(upload_clock)
     print('\n<', ':' * 30, '[TASK-8 :: SEGMENT-8 :: A]', ':' * 30, '>\n')
-    # send_qbf(QueryBloomFilter("DAILY_QBF"))
+    send_qbf(QueryBloomFilter("DAILY_QBF"))
 
 
 # TODO: Need to seed these hashes instead of using different ones
@@ -71,9 +73,9 @@ class DBFManager(threading.Thread):
         self.dbf_clock = dbf_clock
 
     def run(self):
-        print("[>>] Starting " + self.name)
+        # print("[>>] Starting " + self.name)
         maintain_dbfs(self.dbf_clock)
-        print("[>>] Exiting " + self.name)
+        # print("[>>] Exiting " + self.name)
         return
 
 
@@ -84,9 +86,9 @@ class QBFManager(threading.Thread):
         self.qbf_clock = qbf_clock
 
     def run(self):
-        print("[>>] Starting " + self.name)
+        # print("[>>] Starting " + self.name)
         upload_qbf(self.qbf_clock)
-        print("[>>] Exiting " + self.name)
+        # print("[>>] Exiting " + self.name)
         return
 
 
@@ -120,7 +122,7 @@ class DailyBloomFilter(BloomFilter):
 class QueryBloomFilter(BloomFilter):
     def __init__(self, name):
         super().__init__(name)
-        # TODO: generate QBF
+        # TODO: combine DBFs
 
         # TODO: send_qbf
 
@@ -135,3 +137,31 @@ class ContactBloomFilter(BloomFilter):
         super().__init__(name)
         print(f"[>>] Creating CBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
         # OR each dbfs bitarray into the cbf bit array
+
+
+
+'''
+Handles sending CBFs || QBFs to the backend api.
+'''
+
+
+def send_cbf(cbf):
+    try:
+        CBF = {"CBF": cbf}
+        res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
+        print(f"[>>] API RES => {res.json()}")
+    except Exception as err:
+        print(f"[>>] Failed to upload CBF to API, ERROR: {err}")
+
+    return
+
+
+def send_qbf(qbf):
+    try:
+        QBF = {"QBF": qbf}
+        res = requests.post(f'{API_BASE}/qbf/query', json=QBF)
+        print(f"[>>] API RES => {res.json()}")
+    except Exception as err:
+        print(f"[>>] Failed to upload QBF to API, ERROR: {err}")
+
+    return

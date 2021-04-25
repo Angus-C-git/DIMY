@@ -12,10 +12,9 @@ from BloomFilter import DEVICE_DBFS
 
 # ============================ Middlewares =========================== #
 
-PORT = 2049
+PORT = 2048
 BROADCAST_IP = '192.168.4.255'  # Broadcast address (send to all clients)
 IP_LISTENER = get_host_ip()
-API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
 RECONSTRUCT_THRESHOLD = 3
 BROADCAST_RATE = 10  # Broadcast one share/10 sec
@@ -48,7 +47,7 @@ class BroadcastRunner(threading.Thread):
     def run(self):
         # print("[>>] Starting " + self.name)
         broadcast_share(self.shares, self.advert_hash, self.test_mode, 0)
-        print("[>>] Exiting " + self.name)
+        # print("[>>] Exiting " + self.name)
         return
 
 
@@ -141,33 +140,6 @@ def receive_advertisements(test_mode):
             print(f"[>>] Receiver died due to lib, ERROR: {err}, attempting restart ...")
             sock.detach()
             receive_advertisements(test_mode)
-
-
-'''
-Handles sending CBFs || QBFs to the backend api.
-'''
-
-
-def send_cbf(cbf):
-    try:
-        CBF = {"CBF": cbf}
-        res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
-        print(f"[>>] API RES => {res.json()}")
-    except Exception as err:
-        print(f"[>>] Failed to upload CBF to API, ERROR: {err}")
-
-    return
-
-
-def send_qbf(qbf):
-    try:
-        QBF = {"QBF": qbf}
-        res = requests.post(f'{API_BASE}/qbf/query', json=QBF)
-        print(f"[>>] API RES => {res.json()}")
-    except Exception as err:
-        print(f"[>>] Failed to upload QBF to API, ERROR: {err}")
-
-    return
 
 
 '''
