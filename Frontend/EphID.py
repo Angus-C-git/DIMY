@@ -5,7 +5,7 @@ import time
 import threading
 from sslcrypto import ecc
 from sslib import shamir
-from Network import tmp_dh_exchange
+from Network import tmp_dh_exchange, BroadcastRunner
 
 murmur_hash = pyhash.murmur3_32()
 REGEN_CLOCK = 60  # Generate new EPhID Every Minute
@@ -61,7 +61,7 @@ class EphID:
 
 # ============================ Functions ============================ #
 
-# TODO: THIS IS SO SLOW THAT IT SCREWS WITH CONCURRENCY
+# TODO: THIS IS SO SLOW THAT IT PUTS OFF WHOLE SYS CLOCK
 def regenerate_eph_id(eph_id):
     while True:
         time.sleep(REGEN_CLOCK)
@@ -70,6 +70,9 @@ def regenerate_eph_id(eph_id):
         eph_id = EphID("NEW_EPH_ID")
         print(f"[>>] Generated New EphID: {eph_id.current_eph_id.hex()}")
         print(f"[>>] EphID Hash {hex(eph_id.current_eph_id_hash)}")
+
+        BROADCAST_SVR = BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, eph_id.current_eph_id_hash, 0)
+        BROADCAST_SVR.start()
 
 
 def integrity_check(advert_hash, recovered_ehp_id):

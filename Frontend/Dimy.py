@@ -2,7 +2,7 @@ from bitarray.util import rindex
 
 import BloomFilter
 import EphID
-import Network
+import Network      # TODO: Import necessary only
 
 import time
 
@@ -104,7 +104,6 @@ def run_tests():
         print(f"[**] Created {dbf_1.name}")
         # TODO:::: This is fairly redundant test code
         print(f"[**] Updating {dbf_1.name}'s age")
-        dbf_1.update_age()
         print(f"[**] {dbf_1.name} AGE: {dbf_1.age}")
 
         print(f"[**] Encoding test EncID: {TEST_ENC_ID}  into: {dbf_1.name}, with: {BloomFilter.HASH_ROUNDS} murmur "
@@ -120,7 +119,7 @@ def run_tests():
         Network.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
         print(f"[**] Sending QBF with garbage data")
-        Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+        # Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
         print("=" * (22 + len(" DBF Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
@@ -173,7 +172,7 @@ def run_asst_cycle():
     print('\n<', ':' * section_head, '[TASK-3 :: SEGMENT-3 :: A:B:C]', ':' * section_head, '>\n')
 
     EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
-    DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD", 70)     # Override default for testing
+    DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD")     # Override default for testing
     RECEIVER_SVR = Network.ReceiverRunner("RECEIVER_THREAD", PROD)
     BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, EPH_ID.current_eph_id_hash, PROD)
 
@@ -191,9 +190,9 @@ def run_asst_cycle():
 
 
 def main():
-    # print("[>>] Running ...\n")
+    print("[>>] Running ...\n")
     # ========== TESTS ============ #
-    run_tests()
+    # run_tests()
     #################################
     run_asst_cycle()
 

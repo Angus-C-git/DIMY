@@ -120,9 +120,13 @@ def receive_advertisements(test_mode):
         try:
             packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
             advertisement = packet.decode('ascii')      # TODO: This decode causes receiver to die on some hex codes
-            # print(f'[>>] ADVERTISEMENT: {advertisement}')
-            advert_hash = advertisement[:10]
-            share = advertisement[11:]
+
+            # Need to split dynamically instead
+            # print(f"[>>] ADVERTISEMENT: {advertisement.split('|')}")
+            advertisement = advertisement.split('|')
+
+            advert_hash = advertisement[0]
+            share = advertisement[1]
             print(f"[>>] Received Share [{len(shares) + 1}/6] <= {share}")
             shares.append(share)
             # TODO:::: This is poor logic

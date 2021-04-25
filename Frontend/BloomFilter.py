@@ -4,7 +4,7 @@ import time
 import threading
 from datetime import datetime
 from bitarray import bitarray
-from Network import send_qbf
+# from Network import send_qbf      # TODO::::: IMPORTING THIS KILLS IT CAUSE CHAIN FROM MAIN
 
 # =========================== Middlewares ============================ #
 
@@ -51,7 +51,7 @@ def maintain_dbfs(dbf_clock):
 def upload_qbf(upload_clock):
     time.sleep(upload_clock)
     print('\n<', ':' * 30, '[TASK-8 :: SEGMENT-8 :: A]', ':' * 30, '>\n')
-    send_qbf(QueryBloomFilter("DAILY_QBF"))
+    # send_qbf(QueryBloomFilter("DAILY_QBF"))
 
 
 # TODO: Need to seed these hashes instead of using different ones
@@ -114,10 +114,6 @@ class DailyBloomFilter(BloomFilter):
     def __init__(self, name):
         super().__init__(name)
         self.age = 0
-
-    # Called once a day for expiry management
-    def update_age(self):
-        self.age += 1
 
 
 # Uploaded Every 60 minutes
