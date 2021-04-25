@@ -4,6 +4,7 @@ import time
 import threading
 from datetime import datetime
 from bitarray import bitarray
+from Network import send_qbf
 
 # =========================== Middlewares ============================ #
 
@@ -28,9 +29,15 @@ the global array.
 
 
 def maintain_dbfs(dbf_clock):
+    time.sleep(dbf_clock)
+
+    print('\n<', ':' * 30, '[TASK-7 :: SEGMENT-7 :: B]', ':' * 30, '>\n')
+
     # Generate a new DBF every day (dbf_clock)
     print(f"[>>] Generating new DBF")
     DEVICE_DBFS.append(DailyBloomFilter(f"DBF_{datetime.now().time()}"))
+    device_dbf_state = [dbf.name for dbf in DEVICE_DBFS]
+    print(f"[>>] Stored DBFS: {device_dbf_state}")
 
     print(f"[>>] Looking for stale DBFs @, {datetime.now()}")
     # If the device has stored more than DBF_EXPIRY dbfs remove the
@@ -38,23 +45,24 @@ def maintain_dbfs(dbf_clock):
     if len(DEVICE_DBFS) > DBF_EXPIRY:
         print(f"[>>] Evicting DBF: {DEVICE_DBFS.pop(0).name}")
 
-    time.sleep(dbf_clock)
     return maintain_dbfs(dbf_clock)
 
 
-# TODO: Need to seed these hashes
+def upload_qbf(upload_clock):
+    time.sleep(upload_clock)
+    print('\n<', ':' * 30, '[TASK-8 :: SEGMENT-8 :: A]', ':' * 30, '>\n')
+    send_qbf(QueryBloomFilter("DAILY_QBF"))
+
+
+# TODO: Need to seed these hashes instead of using different ones
 def compute_hash_indexes(entry):
     print("[>>] Computing 3 rounds of murmur hash")
-    indexes = []
-    prev_hash = entry
-    for cr in range(0, HASH_ROUNDS):
-        indexes.append(murmur_hash(prev_hash) % BLOOM_SIZE)
-        prev_hash = str(murmur_hash(prev_hash))
-
-    return indexes
+    return [murmur_hash(entry, seed=murmur_hash('seed1')) % BLOOM_SIZE,
+            murmur_hash(entry, seed=murmur_hash('seed2')) % BLOOM_SIZE,
+            murmur_hash(entry, seed=murmur_hash('seed3')) % BLOOM_SIZE]
 
 
-# ========================== Runner Class =========================== #
+# ========================== Runner Classes =========================== #
 
 class DBFManager(threading.Thread):
     def __init__(self, name, dbf_clock=600):
@@ -69,19 +77,36 @@ class DBFManager(threading.Thread):
         return
 
 
+class QBFManager(threading.Thread):
+    def __init__(self, name, qbf_clock=600):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.qbf_clock = qbf_clock
+
+    def run(self):
+        print("[>>] Starting " + self.name)
+        upload_qbf(self.qbf_clock)
+        print("[>>] Exiting " + self.name)
+        return
+
+
 # ========================== Bloom Classes =========================== #
 
 class BloomFilter:
     bit_array = bitarray(BLOOM_SIZE)
-    bit_array.setall(0)
 
     def __init__(self, name):
         self.name = name
+        self.bit_array.setall(0)
 
     def push(self, entry):
+        print('\n<', ':' * 30, '[TASK-7 :: SEGMENT-7 :: A]', ':' * 30, '>\n')
+        # TODO print DBF 'state'
         for index in compute_hash_indexes(entry):
-            print(f"[>>] Setting index: {index}")
+            # print(f"[>>] Setting index: {index}")
             self.bit_array[index] = True  # Flip bit on
+
+        print(f"[>>] Current DBF State Post Insert: {[i[0] for i in enumerate(self.bit_array.tolist()) if i[1]]} \n")
 
 
 # Stored every 10 minutes
@@ -99,6 +124,9 @@ class DailyBloomFilter(BloomFilter):
 class QueryBloomFilter(BloomFilter):
     def __init__(self, name):
         super().__init__(name)
+        # TODO: generate QBF
+
+        # TODO: send_qbf
 
 
 # Combine DBFs into a CBF

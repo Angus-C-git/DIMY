@@ -8,6 +8,7 @@ import mmh3
 import sslcrypto
 import EphID
 from Resolve import get_host_ip
+from BloomFilter import DEVICE_DBFS
 
 # ============================ Middlewares =========================== #
 
@@ -118,7 +119,7 @@ def receive_advertisements(test_mode):
     while True:
         try:
             packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
-            advertisement = packet.decode('ascii')
+            advertisement = packet.decode('ascii')      # TODO: This decode causes receiver to die on some hex codes
             # print(f'[>>] ADVERTISEMENT: {advertisement}')
             advert_hash = advertisement[:10]
             share = advertisement[11:]
@@ -133,7 +134,8 @@ def receive_advertisements(test_mode):
                 if test_mode:
                     return
         except Exception as err:
-            print(f"[>>] Receiver died, ERROR: {err}, attempting restart ...")
+            print(f"[>>] Receiver died due to lib, ERROR: {err}, attempting restart ...")
+            sock.detach()
             receive_advertisements(test_mode)
 
 
@@ -147,8 +149,8 @@ def send_cbf(cbf):
         CBF = {"CBF": cbf}
         res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
         print(f"[>>] API RES => {res.json()}")
-    except:
-        print("[>>] Failed to upload CBF to API")
+    except Exception as err:
+        print(f"[>>] Failed to upload CBF to API, ERROR: {err}")
 
     return
 
@@ -158,7 +160,33 @@ def send_qbf(qbf):
         QBF = {"QBF": qbf}
         res = requests.post(f'{API_BASE}/qbf/query', json=QBF)
         print(f"[>>] API RES => {res.json()}")
-    except:
-        print("[>>] Failed to upload QBF to API")
+    except Exception as err:
+        print(f"[>>] Failed to upload QBF to API, ERROR: {err}")
 
     return
+
+
+'''
+TMP DIFFIE_HELLMAN EXCHANGE WITH HARDCODES FOR TESTING
+
+This function could create concurrency issues
+'''
+
+
+def tmp_dh_exchange(recovered_eph_id):
+    # -------- TMP -------- #
+    print('\n<', ':' * 30, '[TASK-5 :: SEGMENT-5 :: A:B]', ':' * 30, '>\n')
+    TEST_ENC_ID = '0e2fac609122f7f241ed1a969b5e02af'
+    print(f"[>>] Placeholder Generated Shared EncID: {TEST_ENC_ID}")
+
+    print('\n<', ':' * 30, '[TASK-6 :: SEGMENT-6 :: A]', ':' * 30, '>\n')
+    current_dbf = DEVICE_DBFS[-1]
+
+    print(f"[>>] Encoding test EncID: {TEST_ENC_ID}  into: {current_dbf.name}, with: 3 murmur "
+          f"hashes")
+
+    # To TASK-7
+
+    current_dbf.push(TEST_ENC_ID)
+
+

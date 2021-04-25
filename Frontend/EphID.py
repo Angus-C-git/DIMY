@@ -5,7 +5,7 @@ import time
 import threading
 from sslcrypto import ecc
 from sslib import shamir
-from Network import BroadcastRunner
+from Network import tmp_dh_exchange
 
 murmur_hash = pyhash.murmur3_32()
 REGEN_CLOCK = 60  # Generate new EPhID Every Minute
@@ -61,12 +61,15 @@ class EphID:
 
 # ============================ Functions ============================ #
 
+# TODO: THIS IS SO SLOW THAT IT SCREWS WITH CONCURRENCY
 def regenerate_eph_id(eph_id):
     while True:
         time.sleep(REGEN_CLOCK)
 
+        print('\n<', ':' * 30, '[TASK-1 :: SEGMENT-1 :: A]', ':' * 30, '>\n')
         eph_id = EphID("NEW_EPH_ID")
         print(f"[>>] Generated New EphID: {eph_id.current_eph_id.hex()}")
+        print(f"[>>] EphID Hash {hex(eph_id.current_eph_id_hash)}")
 
 
 def integrity_check(advert_hash, recovered_ehp_id):
@@ -77,7 +80,9 @@ def integrity_check(advert_hash, recovered_ehp_id):
 
     if int(advert_hash) == int(recovered_hash):
         print("[>>] Integrity Check Passed")
-        # TODO :::::::: Generate EncID from here @lucy
+        # TODO :::::::: Generate EncID from here @lucy ::::::::
+        tmp_dh_exchange(recovered_ehp_id)
+
     else:
         print("[>>] Integrity Check Failed, discard match")
         return
@@ -94,5 +99,5 @@ def reconstruct_shares(shares, advert_hash):
     }
 
     recovered_secret = shamir.recover_secret(shamir.from_hex(shamir_dict))
-    print(f"[>>] Recovered EphID: {recovered_secret.hex()}, NON-HEX: {recovered_secret}")
-    integrity_check(advert_hash, recovered_secret)  # TODO: add hash
+    print(f"[>>] Recovered EphID: {recovered_secret.hex()}")
+    integrity_check(advert_hash, recovered_secret)
