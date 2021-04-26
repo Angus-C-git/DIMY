@@ -66,10 +66,12 @@ def regenerate_eph_id(eph_id):
     while True:
         time.sleep(REGEN_CLOCK)
 
-        print('\n<', ':' * 30, '[TASK-1 :: SEGMENT-1 :: A]', ':' * 30, '>\n')
         eph_id = EphID("NEW_EPH_ID")
+
+        print('\n<', ':' * 30, '[TASK-1 :: SEGMENT-1 :: A]', ':' * 30, '>\n')
+
         print(f"[>>] Generated New EphID: {eph_id.current_eph_id.hex()}")
-        print(f"[>>] EphID Hash {hex(eph_id.current_eph_id_hash)}")
+        print(f"[>>] EphID Hash {hex(eph_id.current_eph_id_hash)}\n")
 
         BROADCAST_SVR = BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, eph_id.current_eph_id_hash, 0)
         BROADCAST_SVR.start()

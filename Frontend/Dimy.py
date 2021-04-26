@@ -2,7 +2,7 @@ from bitarray.util import rindex
 
 import BloomFilter
 import EphID
-import Network      # TODO: Import necessary only
+import Network  # TODO: Import necessary only
 
 import time
 
@@ -47,13 +47,14 @@ def run_tests():
     print("[5] Full Operations Test (Requires secondary client)")
     print("[6] EphID Core Exchange Test")
     print("[7] Run Assignment Line")
-    print("[8] Quit")
+    print("[8] QBF & CBF Upload Test")
+    print("[9] Quit")
     test_selection = int(input("[>>] "))
 
     if test_selection == 7:
         return
 
-    None if test_selection != 8 else exit(0)
+    None if test_selection != 9 else exit(0)
 
     print("\n[>>] Running tests, pray ...\n")
 
@@ -135,17 +136,43 @@ def run_tests():
         eph_id_runner = EphID.EphIDRunner("EPH_ID_THREAD", eph_id)
         print(f"[**] Regenerating EphIDs every {eph_id_runner.eph_clock} seconds")
 
-        # print(f"[**] Shares: {eph_id_runner.n_shares}")
-        # Wait for shares to be generated
-        # while not eph_id_runner.n_shares:
-        #     continue
-
-        # TODO: resolve generation delay
         broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, eph_id.current_eph_id_hash, 0)
         broadcast_thread.start()
 
         receiver_thread_1.join()
         broadcast_thread.join()
+
+    if test_selection == 8:
+        print("[**] Generating a 5 DBFs to upload ..")
+        from copy import deepcopy
+        for x in range(0, 5):
+            curr_dbf = BloomFilter.DailyBloomFilter(f"DBF_{x}")
+            BloomFilter.DEVICE_DBFS.append(curr_dbf)
+
+        TEST_ENC_ID = '0e2fac609122f7f241ed1a969b5e02af'
+        for dbf in BloomFilter.DEVICE_DBFS:
+            dbf.push(TEST_ENC_ID)
+            # print(f"DBF BIT ARRAY: {dbf.bit_array}")
+
+        # for dbf in BloomFilter.DEVICE_DBFS:
+        #     print(f"NAME: {dbf.name} BA: {dbf.bit_array}")
+
+        # print("[**] Combining into QBF")
+        BloomFilter.upload_qbf(1)
+
+        # upload = str(input("Upload Close Contacts Y/n ? "))
+        # if upload == "yes":
+        cbf = BloomFilter.ContactBloomFilter("TEST_CBF")
+        if cbf.decision == 'n':
+            print("[>>] Contacts not uploaded")
+        else:  # Send 2X
+            BloomFilter.send_cbf(cbf.bit_array)
+            # BloomFilter.send_cbf(cbf.bit_array)
+
+        print("[**] Combining into QBF")
+        BloomFilter.upload_qbf(1)
+
+        run_tests()
 
     print("[>>] Finished tests!")
 
@@ -172,8 +199,8 @@ def run_asst_cycle():
     print('\n<', ':' * section_head, '[TASK-3 :: SEGMENT-3 :: A:B:C]', ':' * section_head, '>\n')
 
     EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
-    DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD")           # Override default for testing
-    QBF_MANAGER = BloomFilter.QBFManager("QBF_MANAGER_THREAD", 300)     # Every 300 seconds send query
+    DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD")  # Override default for testing
+    QBF_MANAGER = BloomFilter.QBFManager("QBF_MANAGER_THREAD", 300)  # Every 300 seconds send query
     RECEIVER_SVR = Network.ReceiverRunner("RECEIVER_THREAD", PROD)
     BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, EPH_ID.current_eph_id_hash, PROD)
 
@@ -194,7 +221,7 @@ def run_asst_cycle():
 def main():
     print("[>>] Running ...\n")
     # ========== TESTS ============ #
-    # run_tests()
+    run_tests()
     #################################
     run_asst_cycle()
 

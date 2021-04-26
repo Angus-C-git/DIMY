@@ -4,13 +4,16 @@ import time
 import threading
 from datetime import datetime
 from bitarray import bitarray
+from copy import deepcopy
+from bitarray.util import ba2base
 import requests
+import base64
 
 # =========================== Middlewares ============================ #
 
 API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
-BLOOM_SIZE = 800000  # 100KB
+BLOOM_SIZE = 20  # 100KB TODO: RESTORE THIS
 HASH_ROUNDS = 3  # Compute 3 hashes for each entry
 fnv_hash = pyhash.fnv1_32()
 murmur_hash = pyhash.murmur3_32()
@@ -53,10 +56,13 @@ def maintain_dbfs(dbf_clock):
 def upload_qbf(upload_clock):
     time.sleep(upload_clock)
     print('\n<', ':' * 30, '[TASK-8 :: SEGMENT-8 :: A]', ':' * 30, '>\n')
-    send_qbf(QueryBloomFilter("DAILY_QBF"))
+
+    print(f"[>>] Combine DBFs into QBF @{datetime.now()}")
+
+    # Upload the QBF to the API
+    send_qbf(QueryBloomFilter("DAILY_QBF").get_bit_array())
 
 
-# TODO: Need to seed these hashes instead of using different ones
 def compute_hash_indexes(entry):
     print("[>>] Computing 3 rounds of murmur hash")
     return [murmur_hash(entry, seed=murmur_hash('seed1')) % BLOOM_SIZE,
@@ -95,15 +101,15 @@ class QBFManager(threading.Thread):
 # ========================== Bloom Classes =========================== #
 
 class BloomFilter:
-    bit_array = bitarray(BLOOM_SIZE)
 
     def __init__(self, name):
         self.name = name
+        self.bit_array = bitarray(BLOOM_SIZE)
         self.bit_array.setall(0)
 
     def push(self, entry):
         print('\n<', ':' * 30, '[TASK-7 :: SEGMENT-7 :: A]', ':' * 30, '>\n')
-        # TODO print DBF 'state'
+
         for index in compute_hash_indexes(entry):
             # print(f"[>>] Setting index: {index}")
             self.bit_array[index] = True  # Flip bit on
@@ -120,24 +126,37 @@ class DailyBloomFilter(BloomFilter):
 
 # Uploaded Every 60 minutes
 class QueryBloomFilter(BloomFilter):
-    def __init__(self, name):
-        super().__init__(name)
-        # TODO: combine DBFs
 
-        # TODO: send_qbf
+    def __init__(self, name):
+        global DEVICE_DBFS
+        super().__init__(name)
+        # Combine all available DBFs into a QBF
+        for dbf_index in DEVICE_DBFS:
+            # print(f"DBF NAME: {dbf_index.name}, BA: {dbf_index.bit_array}")
+            # print(f" {self.bit_array} OR {dbf_index.bit_array}")
+            self.bit_array |= dbf_index.bit_array
+            # print(f"RESULT: {self.bit_array}")
+        print(f"[>>] Created QBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
+
+    def get_bit_array(self):
+        return self.bit_array
 
 
 # Combine DBFs into a CBF
 class ContactBloomFilter(BloomFilter):
     def __init__(self, name):
-        decision = str(input("Do you wish to upload your close contacts? Y/n")).lower()
-        if decision == 'n':
+        super().__init__(name)
+        # Combine all available DBFs into a CBF
+        for dbf in DEVICE_DBFS:
+            self.bit_array |= dbf.bit_array
+
+        self.decision = str(input("Do you wish to upload your close contacts Y/n? ")).lower()
+        if self.decision == 'n':
             return
 
-        super().__init__(name)
-        print(f"[>>] Creating CBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
+        print(f"[>>] Combine DBFs into CBF @{datetime.now()}")
+        print(f"[>>] Created CBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
         # OR each dbfs bitarray into the cbf bit array
-
 
 
 '''
@@ -147,9 +166,13 @@ Handles sending CBFs || QBFs to the backend api.
 
 def send_cbf(cbf):
     try:
-        CBF = {"CBF": cbf}
+        CBF = {"CBF": base64.b64encode(cbf).decode('ascii')}
+        print("[>>] Uploading CBF ... ")
         res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
-        print(f"[>>] API RES => {res.json()}")
+
+        print('\n<', ':' * 30, '[TASK-10 :: SEGMENT-10 :: A]', ':' * 30, '>\n')
+
+        print(f"[>>] Result: {res.json()['result']}, {res.json()['message']}")
     except Exception as err:
         print(f"[>>] Failed to upload CBF to API, ERROR: {err}")
 
@@ -158,9 +181,15 @@ def send_cbf(cbf):
 
 def send_qbf(qbf):
     try:
-        QBF = {"QBF": qbf}
+        # QBF = {"QBF": ba2base(64, qbf)}
+        QBF = {"QBF": base64.b64encode(qbf).decode('ascii')}
+        # print(f"PRE_UPLOAD_QBF {QBF}, Bits: {qbf}")
+        print("[>>] Uploading QBF ... ")
         res = requests.post(f'{API_BASE}/qbf/query', json=QBF)
-        print(f"[>>] API RES => {res.json()}")
+
+        print('\n<', ':' * 30, '[TASK-9 :: SEGMENT-9 :: A:B]', ':' * 30, '>\n')
+
+        print(f"[>>] Result: {res.json()['result']}, Message: {res.json()['message']}")
     except Exception as err:
         print(f"[>>] Failed to upload QBF to API, ERROR: {err}")
 
