@@ -83,6 +83,9 @@ class Dh:
     def get_shared_key(self):
         return self.shared_key
 
+    def delete_shared_key(self):
+        self.shared_key = None
+
 # ======================== Networking Runners ======================== #
 
 
