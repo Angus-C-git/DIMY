@@ -1,0 +1,7 @@
+bitarray~=1.9.2
+pyhash~=0.9.3
+sslcrypto~=5.3
+sslib~=0.2.0
+requests~=2.18.4
+mmh3~=3.0.0
+tinyec~=0.3.1

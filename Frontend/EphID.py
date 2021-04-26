@@ -87,10 +87,11 @@ def integrity_check(advert_hash, recovered_ehp_id):
         # TODO :::::::: Generate EncID from here @lucy ::::::::
         dh = Dh()
         encID = dh.get_shared_key()
+
         current_dbf = DEVICE_DBFS[-1]
-        print(f"[>>] Encoding EncID: {encID}  into: {current_dbf.name}, with: 3 murmur "
+        print(f"[>>] Encoding EncID: {str(encID)}  into: {current_dbf.name}, with: 3 murmur "
               f"hashes")
-        current_dbf.push(encID)
+        current_dbf.push(str(encID))
     else:
         print("[>>] Integrity Check Failed, discard match")
         return

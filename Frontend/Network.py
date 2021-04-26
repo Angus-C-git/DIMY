@@ -24,7 +24,7 @@ BROADCAST_RATE = 10  # Broadcast one share/10 sec
 
 # =========================== Diffie Hellman ========================= #
 
-class Dh():
+class Dh:
     def __init__(self):
         self.priv_key, self.pub_key = self.generate_dh()
         self.shared_key = None
@@ -32,23 +32,23 @@ class Dh():
         
     def generate_dh(self):
         # Save the curve, a particular curve used in ECDH
-        curve = registry.get_curve('brainpoolP256r1')
+        curve = registry.get_curve('secp192r1')
 
         priv_key = secrets.randbelow(curve.field.n)
-        pub_key = priv_key * curve.g # i dont know what curve g is dont ask me
+        pub_key = priv_key * curve.g  # i dont know what curve g is dont ask me
 
         print(f"[>>] Generating private key => {priv_key}")
         print(f"[>>] Generating public key => {pub_key}")
 
-        return (priv_key, self.compress(pub_key))
+        return priv_key, self.compress(pub_key)
 
     def share_dh(self):
         try:
             tsend = threading.Thread(target=self.send_dh, args=())
             treceive = threading.Thread(target=self.receive_dh, args=())
 
-            tsend.start()
             treceive.start()
+            tsend.start()
             tsend.join()
             treceive.join()
 
@@ -69,19 +69,18 @@ class Dh():
 
         print(f"[>>] DH Listener is live IP: <{IP_LISTENER}> PORT: <{PORT2}> Hostname: <{socket.gethostname()}>")
 
-        while rec_pub_key == None:
+        while rec_pub_key is None:
             try:
                 packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
                 rec_pub_key = packet.decode('ascii')
                 print(f"[>>] Received public key => {rec_pub_key}")
+                # return rec_pub_key
             except Exception as err:
                 print(f"[>>] Receiver died, ERROR: {err}")
 
-        self.shared_key = compress(rec_pub_key * self.priv_key)
-        print(rec_pub_key)
-        print(self.priv_key)
-        print(rec_pub_key * self.priv_key)
-        print(self.shared_key)
+        # print(int(rec_pub_key, 16) * self.priv_key)
+        self.shared_key = int(rec_pub_key, 16) * self.priv_key
+        return
 
     def compress(self, key):
         return hex(key.x) + hex(key.y % 2)[2:]

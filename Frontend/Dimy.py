@@ -199,9 +199,10 @@ def run_asst_cycle():
 def main():
     print("[>>] Running ...\n")
     # ========== TESTS ============ #
-    run_tests()
+    # run_tests()
     #################################
-    #run_asst_cycle()
+    run_asst_cycle()
+
 
 
 if __name__ == '__main__':
