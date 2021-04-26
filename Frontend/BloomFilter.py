@@ -13,7 +13,7 @@ import base64
 
 API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
-BLOOM_SIZE = 20  # 100KB TODO: RESTORE THIS
+BLOOM_SIZE = 80000  # 100KB
 HASH_ROUNDS = 3  # Compute 3 hashes for each entry
 fnv_hash = pyhash.fnv1_32()
 murmur_hash = pyhash.murmur3_32()
@@ -111,7 +111,6 @@ class BloomFilter:
         print('\n<', ':' * 30, '[TASK-7 :: SEGMENT-7 :: A]', ':' * 30, '>\n')
 
         for index in compute_hash_indexes(entry):
-            # print(f"[>>] Setting index: {index}")
             self.bit_array[index] = True  # Flip bit on
 
         print(f"[>>] Current DBF State Post Insert: {[i[0] for i in enumerate(self.bit_array.tolist()) if i[1]]} \n")
@@ -132,10 +131,7 @@ class QueryBloomFilter(BloomFilter):
         super().__init__(name)
         # Combine all available DBFs into a QBF
         for dbf_index in DEVICE_DBFS:
-            # print(f"DBF NAME: {dbf_index.name}, BA: {dbf_index.bit_array}")
-            # print(f" {self.bit_array} OR {dbf_index.bit_array}")
             self.bit_array |= dbf_index.bit_array
-            # print(f"RESULT: {self.bit_array}")
         print(f"[>>] Created QBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
 
     def get_bit_array(self):
@@ -150,6 +146,8 @@ class ContactBloomFilter(BloomFilter):
         for dbf in DEVICE_DBFS:
             self.bit_array |= dbf.bit_array
 
+        print('\n<', ':' * 30, '[TASK-10 :: SEGMENT-10 :: A]', ':' * 30, '>\n')
+
         self.decision = str(input("Do you wish to upload your close contacts Y/n? ")).lower()
         if self.decision == 'n':
             return
@@ -158,6 +156,8 @@ class ContactBloomFilter(BloomFilter):
         print(f"[>>] Created CBF from current DBFs: {[x.name for x in DEVICE_DBFS]}")
         # OR each dbfs bitarray into the cbf bit array
 
+    def get_bit_array(self):
+        return self.bit_array
 
 '''
 Handles sending CBFs || QBFs to the backend api.
@@ -167,11 +167,11 @@ Handles sending CBFs || QBFs to the backend api.
 def send_cbf(cbf):
     try:
         CBF = {"CBF": base64.b64encode(cbf).decode('ascii')}
-        print("[>>] Uploading CBF ... ")
-        res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
 
+        res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
         print('\n<', ':' * 30, '[TASK-10 :: SEGMENT-10 :: A]', ':' * 30, '>\n')
 
+        print("[>>] Uploading CBF ... ")
         print(f"[>>] Result: {res.json()['result']}, {res.json()['message']}")
     except Exception as err:
         print(f"[>>] Failed to upload CBF to API, ERROR: {err}")
@@ -181,15 +181,20 @@ def send_cbf(cbf):
 
 def send_qbf(qbf):
     try:
-        # QBF = {"QBF": ba2base(64, qbf)}
+
         QBF = {"QBF": base64.b64encode(qbf).decode('ascii')}
-        # print(f"PRE_UPLOAD_QBF {QBF}, Bits: {qbf}")
         print("[>>] Uploading QBF ... ")
         res = requests.post(f'{API_BASE}/qbf/query', json=QBF)
 
         print('\n<', ':' * 30, '[TASK-9 :: SEGMENT-9 :: A:B]', ':' * 30, '>\n')
 
-        print(f"[>>] Result: {res.json()['result']}, Message: {res.json()['message']}")
+        print(f"[>>] Result: {res.json()['result']}, Message: {res.json()['message']}\n")
+
+        # NOTE: This is a example of operation only of uploading a CBF on positive test results
+        time.sleep(5)
+        EXAMPLE_CBF = ContactBloomFilter("EXAMPLE_CBF")
+        send_cbf(EXAMPLE_CBF.get_bit_array())
+
     except Exception as err:
         print(f"[>>] Failed to upload QBF to API, ERROR: {err}")
 

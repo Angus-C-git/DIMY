@@ -204,7 +204,7 @@ def run_asst_cycle():
 
     EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
     DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD")  # Override default for testing
-    QBF_MANAGER = BloomFilter.QBFManager("QBF_MANAGER_THREAD", 300)  # Every 300 seconds send query
+    QBF_MANAGER = BloomFilter.QBFManager("QBF_MANAGER_THREAD", 120)  # Every 300 seconds send query
     RECEIVER_SVR = Network.ReceiverRunner("RECEIVER_THREAD", PROD)
     BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, EPH_ID.current_eph_id_hash, PROD)
 
@@ -217,9 +217,7 @@ def run_asst_cycle():
     # print("[>>] continued ...")
 
     # CREATE GENESIS DBF
-    BloomFilter.DEVICE_DBFS.append(BloomFilter.DailyBloomFilter("genesis_from_cold_start"))
-
-    # print(f"[**] Current DBF State Post Insert: {[i[0] for i in enumerate(dbf_1.bit_array.tolist()) if i[1]]}")
+    BloomFilter.DEVICE_DBFS.append(BloomFilter.DailyBloomFilter("genesis_DBF"))
 
 
 def main():
@@ -228,7 +226,6 @@ def main():
     # run_tests()
     #################################
     run_asst_cycle()
-
 
 
 if __name__ == '__main__':

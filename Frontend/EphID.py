@@ -62,7 +62,7 @@ class EphID:
 
 # ============================ Functions ============================ #
 
-# TODO: THIS IS SO SLOW THAT IT PUTS OFF WHOLE SYS CLOCK
+
 def regenerate_eph_id(eph_id):
     while True:
         time.sleep(REGEN_CLOCK)
@@ -86,9 +86,10 @@ def integrity_check(advert_hash, recovered_ehp_id):
 
     if int(advert_hash) == int(recovered_hash):
         print("[>>] Integrity Check Passed")
-        # TODO :::::::: Generate EncID from here @lucy ::::::::
         dh = Dh()
         encID = dh.get_shared_key()
+
+        print('\n<', ':' * 30, '[TASK-5 :: SEGMENT-5 :: A:B]', ':' * 30, '>\n')
 
         current_dbf = DEVICE_DBFS[-1]
         print(f"[>>] Encoding EncID: {str(encID)}  into: {current_dbf.name}, with: 3 murmur "

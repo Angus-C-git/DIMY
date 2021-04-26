@@ -35,10 +35,7 @@ class Dh:
         curve = registry.get_curve('secp192r1')
 
         priv_key = secrets.randbelow(curve.field.n)
-        pub_key = priv_key * curve.g  # i dont know what curve g is dont ask me
-
-        print(f"[>>] Generating private key => {priv_key}")
-        print(f"[>>] Generating public key => {pub_key}")
+        pub_key = priv_key * curve.g
 
         return priv_key, self.compress(pub_key)
 
@@ -56,24 +53,22 @@ class Dh:
             print(f"[>>] Unable to start thread ERROR: {e}")
 
     def send_dh(self):
-        print(f"[>>] Sending the public key")
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-        sock.sendto(self.pub_key.encode('ascii'), (IP_LISTENER, PORT2))
+        sock.sendto(self.pub_key.encode('ascii'), (BROADCAST_IP, PORT2))
 
     def receive_dh(self):
         rec_pub_key = None
-        print(f"[>>] Receiving the public key")
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        listener = (IP_LISTENER, PORT2)
+        listener = (BROADCAST_IP, PORT2)
         sock.bind(listener)
 
-        print(f"[>>] DH Listener is live IP: <{IP_LISTENER}> PORT: <{PORT2}> Hostname: <{socket.gethostname()}>")
+        # print(f"[>>] DH Listener is live IP: <{IP_LISTENER}> PORT: <{PORT2}> Hostname: <{socket.gethostname()}>")
 
         while rec_pub_key is None:
             try:
                 packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
                 rec_pub_key = packet.decode('ascii')
-                print(f"[>>] Received public key => {rec_pub_key}")
+                # print(f"[>>] Received public key => {rec_pub_key}")
                 # return rec_pub_key
             except Exception as err:
                 print(f"[>>] Receiver died, ERROR: {err}")
@@ -140,7 +135,7 @@ def broadcast_share(shares, advert_hash, test_mode, cnt):
         print(f"[>>] Sending share => {shares[0]}")
         advertisement = f'{advert_hash}|{shares[0]}'
         # sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
-        sock.sendto(advertisement.encode('ascii'), (IP_LISTENER, PORT))
+        sock.sendto(advertisement.encode('ascii'), (BROADCAST_IP, PORT))
 
         # remove the share we just broadcast
         shares.pop(0)
@@ -186,7 +181,7 @@ def receive_advertisements(test_mode):
     while True:
         try:
             packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
-            advertisement = packet.decode('ascii')      # TODO: This decode causes receiver to die on some hex codes
+            advertisement = packet.decode('ascii')
 
             # Need to split dynamically instead
             # print(f"[>>] ADVERTISEMENT: {advertisement.split('|')}")
@@ -196,7 +191,6 @@ def receive_advertisements(test_mode):
             share = advertisement[1]
             print(f"[>>] Received Share [{len(shares) + 1}/6] <= {share}")
             shares.append(share)
-            # TODO:::: This is poor logic
             if len(shares) == 3 or len(shares) == 6:
                 EphID.reconstruct_shares(shares, advert_hash)
                 if len(shares) == 6:
