@@ -22,7 +22,7 @@ DBF_EXPIRY = 6  # Only store dbfs newer than this
 DEVICE_DBFS = []  # The last index is the current DBF
 # ============================ Functions ============================ #
 
-# TODO: work out how best to interact with the current DBF
+
 '''
 Uses timing module to keep track of how long a DBF has been alive for.
 Manages the global queue of DBFs popping entries which have a age equal
@@ -34,33 +34,33 @@ the global array.
 
 
 def maintain_dbfs(dbf_clock):
-    time.sleep(dbf_clock)
+    while True:
+        time.sleep(dbf_clock)
 
-    print('\n<', ':' * 30, '[TASK-7 :: SEGMENT-7 :: B]', ':' * 30, '>\n')
+        print('\n<', ':' * 30, '[TASK-7 :: SEGMENT-7 :: B]', ':' * 30, '>\n')
 
-    # Generate a new DBF every day (dbf_clock)
-    print(f"[>>] Generating new DBF")
-    DEVICE_DBFS.append(DailyBloomFilter(f"DBF_{datetime.now().time()}"))
-    device_dbf_state = [dbf.name for dbf in DEVICE_DBFS]
-    print(f"[>>] Stored DBFS: {device_dbf_state}")
+        # Generate a new DBF every day (dbf_clock)
+        print(f"[>>] Generating new DBF")
+        DEVICE_DBFS.append(DailyBloomFilter(f"DBF_{datetime.now().time()}"))
+        device_dbf_state = [dbf.name for dbf in DEVICE_DBFS]
+        print(f"[>>] Stored DBFS: {device_dbf_state}")
 
-    print(f"[>>] Looking for stale DBFs @, {datetime.now()}")
-    # If the device has stored more than DBF_EXPIRY dbfs remove the
-    # oldest one
-    if len(DEVICE_DBFS) > DBF_EXPIRY:
-        print(f"[>>] Evicting DBF: {DEVICE_DBFS.pop(0).name}")
-
-    return maintain_dbfs(dbf_clock)
+        print(f"[>>] Looking for stale DBFs @, {datetime.now()}")
+        # If the device has stored more than DBF_EXPIRY dbfs remove the
+        # oldest one
+        if len(DEVICE_DBFS) > DBF_EXPIRY:
+            print(f"[>>] Evicting DBF: {DEVICE_DBFS.pop(0).name}")
 
 
 def upload_qbf(upload_clock):
-    time.sleep(upload_clock)
-    print('\n<', ':' * 30, '[TASK-8 :: SEGMENT-8 :: A]', ':' * 30, '>\n')
+    while True:
+        time.sleep(upload_clock)
+        print('\n<', ':' * 30, '[TASK-8 :: SEGMENT-8 :: A]', ':' * 30, '>\n')
 
-    print(f"[>>] Combine DBFs into QBF @{datetime.now()}")
+        print(f"[>>] Combine DBFs into QBF @{datetime.now()}")
 
-    # Upload the QBF to the API
-    send_qbf(QueryBloomFilter("DAILY_QBF").get_bit_array())
+        # Upload the QBF to the API
+        send_qbf(QueryBloomFilter("DAILY_QBF").get_bit_array())
 
 
 def compute_hash_indexes(entry):
@@ -158,6 +158,7 @@ class ContactBloomFilter(BloomFilter):
 
     def get_bit_array(self):
         return self.bit_array
+
 
 '''
 Handles sending CBFs || QBFs to the backend api.
