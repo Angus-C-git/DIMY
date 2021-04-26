@@ -46,11 +46,12 @@ def run_tests():
     print("[4] Bloom Filter tests")
     print("[5] Full Operations Test (Requires secondary client)")
     print("[6] EphID Core Exchange Test")
-    print("[7] Run Assignment Line")
-    print("[8] Quit")
+    print("[7] Diffie Hellman Key Exchange Test")
+    print("[8] Run Assignment Line")
+    print("[9] Quit")
     test_selection = int(input("[>>] "))
 
-    if test_selection == 7:
+    if test_selection == 8:
         return
 
     None if test_selection != 8 else exit(0)
@@ -147,6 +148,10 @@ def run_tests():
         receiver_thread_1.join()
         broadcast_thread.join()
 
+    if test_selection == 7 or test_selection == 5:
+        print("=" * 10, "Diffie Hellman Tests", "=" * 10)
+        dh = Network.Dh()
+
     print("[>>] Finished tests!")
 
 
@@ -194,9 +199,9 @@ def run_asst_cycle():
 def main():
     print("[>>] Running ...\n")
     # ========== TESTS ============ #
-    # run_tests()
+    run_tests()
     #################################
-    run_asst_cycle()
+    #run_asst_cycle()
 
 
 if __name__ == '__main__':
