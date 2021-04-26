@@ -5,7 +5,8 @@ import time
 import threading
 from sslcrypto import ecc
 from sslib import shamir
-from Network import tmp_dh_exchange, BroadcastRunner
+from Network import BroadcastRunner, Dh
+from BloomFilter import DEVICE_DBFS
 
 murmur_hash = pyhash.murmur3_32()
 REGEN_CLOCK = 60  # Generate new EPhID Every Minute
@@ -86,8 +87,13 @@ def integrity_check(advert_hash, recovered_ehp_id):
     if int(advert_hash) == int(recovered_hash):
         print("[>>] Integrity Check Passed")
         # TODO :::::::: Generate EncID from here @lucy ::::::::
-        tmp_dh_exchange(recovered_ehp_id)
+        dh = Dh()
+        encID = dh.get_shared_key()
 
+        current_dbf = DEVICE_DBFS[-1]
+        print(f"[>>] Encoding EncID: {str(encID)}  into: {current_dbf.name}, with: 3 murmur "
+              f"hashes")
+        current_dbf.push(str(encID))
     else:
         print("[>>] Integrity Check Failed, discard match")
         return

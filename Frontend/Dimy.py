@@ -51,8 +51,8 @@ def run_tests():
     print("[9] Quit")
     test_selection = int(input("[>>] "))
 
-    # if test_selection == 8:
-    #     return
+    if test_selection == 8:
+        run_asst_cycle()
 
     None if test_selection != 9 else exit(0)
 
@@ -117,10 +117,10 @@ def run_tests():
 
         print("\n[**] Starting CBF/DBF Upload Tests")
         print(f"[**] Sending CBF with garbage data")
-        Network.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+        BloomFilter.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
         print(f"[**] Sending QBF with garbage data")
-        # Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+        BloomFilter.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
         print("=" * (22 + len(" DBF Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
@@ -228,6 +228,7 @@ def main():
     # run_tests()
     #################################
     run_asst_cycle()
+
 
 
 if __name__ == '__main__':
