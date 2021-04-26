@@ -7,6 +7,9 @@ import time
 import mmh3
 import sslcrypto
 import EphID
+from tinyec import registry
+import secrets
+import _thread as thread
 from Resolve import get_host_ip
 from BloomFilter import DEVICE_DBFS
 
@@ -19,6 +22,68 @@ IP_LISTENER = get_host_ip()
 RECONSTRUCT_THRESHOLD = 3
 BROADCAST_RATE = 10  # Broadcast one share/10 sec
 
+
+# =========================== Diffie Hellman ========================= #
+
+# class Dh_thread(threading.Thread):
+#     def __init__(self, name):
+#         threading.Thread.__init__(self)
+#         self.name = name
+#     def run(self)
+
+
+class Dh():
+    def __init__(self):
+        self.priv_key, self.pub_key = self.generate_dh()
+        self.shared_key = self.share_dh()
+        
+    def generate_dh(self):
+        # Save the curve, a particular curve used in ECDH
+        curve = registry.get_curve('brainpoolP256r1')
+
+        priv_key = secrets.randbelow(curve.field.n)
+        pub_key = priv_key * curve.g # i dont know what curve g is dont ask me
+
+        print(f"[>>] Generating private key => {priv_key}")
+        print(f"[>>] Generating public key => {pub_key}")
+
+        return (priv_key, self.compress(pub_key))
+
+    def share_dh(self):
+        try:
+            # thread.start_new_thread(self.send_dh, ())
+            # thread.start_new_thread(self.receive_dh, ())
+            threading.Thread(target=self.send_dh, args=()).start()
+            threading.Thread(target=self.receive_dh, args=()).start()
+        except Exception as e:
+            print(f"[>>] Unable to start thread ERROR: {e}")
+
+    def send_dh(self):
+        print(f"[>>] Sending the public key")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        sock.sendto(self.pub_key.encode('ascii'), (IP_LISTENER, PORT))
+
+    def receive_dh(self):
+        rec_pub_key = None
+        print(f"[>>] Receiving the public key")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        listener = (IP_LISTENER, PORT)
+        sock.bind(listener)
+
+        print(f"[>>] Listener is live IP: <{IP_LISTENER}> PORT: <{PORT}> Hostname: <{socket.gethostname()}>")
+
+        while rec_pub_key == None:
+            try:
+                packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
+                rec_pub_key = packet.decode('ascii')
+                print(f"[>>] Received public key => {rec_pub_key}")
+            except Exception as err:
+                print(f"[>>] Receiver died, ERROR: {err}")
+
+        self.shared_key = rec_pub_key * self.priv_key
+
+    def compress(self, key):
+        return hex(key.x) + hex(key.y % 2)[2:]
 
 # ======================== Networking Runners ======================== #
 
@@ -52,6 +117,7 @@ class BroadcastRunner(threading.Thread):
 
 
 # ============================ Functions ============================ #
+
 
 '''
 Handles broadcasting of EphID shares.

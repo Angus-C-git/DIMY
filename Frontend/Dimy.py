@@ -46,12 +46,12 @@ def run_tests():
     print("[4] Bloom Filter tests")
     print("[5] Full Operations Test (Requires secondary client)")
     print("[6] EphID Core Exchange Test")
-    print("[7] Run Assignment Line")
-    print("[8] QBF & CBF Upload Test")
+    print("[7] Diffie Hellman Key Exchange Test")
+    print("[8] Run Assignment Line")
     print("[9] Quit")
     test_selection = int(input("[>>] "))
 
-    if test_selection == 7:
+    if test_selection == 8:
         return
 
     None if test_selection != 9 else exit(0)
@@ -223,7 +223,7 @@ def main():
     # ========== TESTS ============ #
     run_tests()
     #################################
-    run_asst_cycle()
+    #run_asst_cycle()
 
 
 if __name__ == '__main__':
