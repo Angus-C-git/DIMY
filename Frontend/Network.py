@@ -8,15 +8,17 @@ import mmh3
 import sslcrypto
 import EphID
 from Resolve import get_host_ip
+from BloomFilter import DEVICE_DBFS
 
 # ============================ Middlewares =========================== #
 
-PORT = 2049
+PORT = 2048
 BROADCAST_IP = '192.168.4.255'  # Broadcast address (send to all clients)
 IP_LISTENER = get_host_ip()
-API_BASE = 'http://ec2-3-26-37-172.ap-southeast-2.compute.amazonaws.com:9000/comp4337'
 
 RECONSTRUCT_THRESHOLD = 3
+BROADCAST_RATE = 10  # Broadcast one share/10 sec
+
 
 # ======================== Networking Runners ======================== #
 
@@ -29,22 +31,23 @@ class ReceiverRunner(threading.Thread):
 
     def run(self):
         # print("[>>] Starting " + self.name)
-        receive_shares(self.test_mode)
+        receive_advertisements(self.test_mode)
         # print("[>>] Exiting " + self.name)
         return
 
 
 class BroadcastRunner(threading.Thread):
-    def __init__(self, name, shares, test_mode):
+    def __init__(self, name, shares, advert_hash, test_mode):
         threading.Thread.__init__(self)
         self.name = name
         self.test_mode = test_mode
         self.shares = shares
+        self.advert_hash = advert_hash
 
     def run(self):
         # print("[>>] Starting " + self.name)
-        broadcast_share(self.shares, self.test_mode, 0)
-        print("[>>] Exiting " + self.name)
+        broadcast_share(self.shares, self.advert_hash, self.test_mode, 0)
+        # print("[>>] Exiting " + self.name)
         return
 
 
@@ -56,7 +59,7 @@ Will be run by a thread.
 '''
 
 
-def broadcast_share(shares, test_mode, cnt):
+def broadcast_share(shares, advert_hash, test_mode, cnt):
     # If we have broadcast all the shares exit
     if not shares:
         return
@@ -67,7 +70,10 @@ def broadcast_share(shares, test_mode, cnt):
 
         # tmp_share = "some_share_n"
         print(f"[>>] Sending share => {shares[0]}")
-        sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
+        # TODO: TMP send hash
+        advertisement = f'{advert_hash}|{shares[0]}'
+        # sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
+        sock.sendto(advertisement.encode('ascii'), (IP_LISTENER, PORT))
         # remove the share we just broadcast
         shares.pop(0)
         if test_mode:
@@ -76,12 +82,12 @@ def broadcast_share(shares, test_mode, cnt):
                 return
 
         # Broadcast one share/10s
-        time.sleep(10)
-        return broadcast_share(shares, test_mode, cnt)
+        time.sleep(BROADCAST_RATE)
+        return broadcast_share(shares, advert_hash, test_mode, cnt)
     except Exception as e:
         print(f"[>>] Broadcaster died, ERROR: {e} attempting restart")
         time.sleep(10)
-        return broadcast_share(shares, test_mode, cnt)
+        return broadcast_share(shares, test_mode, advert_hash, cnt)
 
 
 '''
@@ -97,7 +103,7 @@ TODO:
 '''
 
 
-def receive_shares(test_mode):
+def receive_advertisements(test_mode):
     shares = []  # Store buffer of received shares
     # The prime_mod is a fixed value for the shamir library necessary for reconstruction
 
@@ -112,44 +118,51 @@ def receive_shares(test_mode):
     while True:
         try:
             packet, sender = sock.recvfrom(4096)  # Receive share in 4069 bit buffer??
-            share = packet.decode('ascii')
-            print(f"[>>] Received Share [{len(shares)+1}/6] <= {share}")
+            advertisement = packet.decode('ascii')      # TODO: This decode causes receiver to die on some hex codes
+
+            # Need to split dynamically instead
+            # print(f"[>>] ADVERTISEMENT: {advertisement.split('|')}")
+            advertisement = advertisement.split('|')
+
+            advert_hash = advertisement[0]
+            share = advertisement[1]
+            print(f"[>>] Received Share [{len(shares) + 1}/6] <= {share}")
             shares.append(share)
             # TODO:::: This is poor logic
             if len(shares) == 3 or len(shares) == 6:
-                EphID.reconstruct_shares(shares)
+                EphID.reconstruct_shares(shares, advert_hash)
                 if len(shares) == 6:
                     shares = []  # reset shares buffer
 
                 if test_mode:
                     return
         except Exception as err:
-            print(f"[>>] Receiver died, ERROR: {err}, attempting restart ...")
-            receive_shares(test_mode)
+            print(f"[>>] Receiver died due to lib, ERROR: {err}, attempting restart ...")
+            sock.detach()
+            receive_advertisements(test_mode)
 
 
 '''
-Handles sending CBFs || QBFs to the backend api.
+TMP DIFFIE_HELLMAN EXCHANGE WITH HARDCODES FOR TESTING
+
+This function could create concurrency issues
 '''
 
 
-def send_cbf(cbf):
-    try:
-        CBF = {"CBF": cbf}
-        res = requests.post(f'{API_BASE}/cbf/upload', json=CBF)
-        print(f"[>>] API RES => {res.json()}")
-    except:
-        print("[>>] Failed to upload CBF to API")
+def tmp_dh_exchange(recovered_eph_id):
+    # -------- TMP -------- #
+    print('\n<', ':' * 30, '[TASK-5 :: SEGMENT-5 :: A:B]', ':' * 30, '>\n')
+    TEST_ENC_ID = '0e2fac609122f7f241ed1a969b5e02af'
+    print(f"[>>] Placeholder Generated Shared EncID: {TEST_ENC_ID}")
 
-    return
+    print('\n<', ':' * 30, '[TASK-6 :: SEGMENT-6 :: A]', ':' * 30, '>\n')
+    current_dbf = DEVICE_DBFS[-1]
+
+    print(f"[>>] Encoding test EncID: {TEST_ENC_ID}  into: {current_dbf.name}, with: 3 murmur "
+          f"hashes")
+
+    # To TASK-7
+
+    current_dbf.push(TEST_ENC_ID)
 
 
-def send_qbf(qbf):
-    try:
-        QBF = {"QBF": qbf}
-        res = requests.post(f'{API_BASE}/qbf/query', json=QBF)
-        print(f"[>>] API RES => {res.json()}")
-    except:
-        print("[>>] Failed to upload QBF to API")
-
-    return

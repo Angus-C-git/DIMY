@@ -1,11 +1,14 @@
+from bitarray.util import rindex
+
 import BloomFilter
 import EphID
-import Network
+import Network      # TODO: Import necessary only
 
 import time
 
 PROD = 0
 TEST = 1
+# SECTION_HEAD = 30
 
 '''
 Print Banner Art
@@ -43,10 +46,14 @@ def run_tests():
     print("[4] Bloom Filter tests")
     print("[5] Full Operations Test (Requires secondary client)")
     print("[6] EphID Core Exchange Test")
-    print("[7] Quit")
+    print("[7] Run Assignment Line")
+    print("[8] Quit")
     test_selection = int(input("[>>] "))
 
-    None if test_selection != 7 else exit(0)
+    if test_selection == 7:
+        return
+
+    None if test_selection != 8 else exit(0)
 
     print("\n[>>] Running tests, pray ...\n")
 
@@ -75,7 +82,8 @@ def run_tests():
         receiver_thread_1 = Network.ReceiverRunner("RECEIVER_THREAD", 1)
         receiver_thread_1.start()
 
-        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", ["share_1", "share_2", "share_3", "share_4"], 1)
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", ["share_1", "share_2", "share_3", "share_4"],
+                                                   "HASH", 1)
         broadcast_thread.start()
 
         receiver_thread_1.join()
@@ -87,21 +95,31 @@ def run_tests():
         print("=" * 12, "BF Tests", "=" * 12)
 
         # - DBF TESTS - #
+        TEST_ENC_ID = '0e2fac609122f7f241ed1a969b5e02af'
         print("[**] Starting DBF manager")
-        dbfRunner = BloomFilter.DBFManager("DBF_RUNNER_THREAD", 15)  # generate a new dbf every 15 sec
+        dbfRunner = BloomFilter.DBFManager("DBF_RUNNER_THREAD", 120)  # generate a new dbf every 60 sec
         dbfRunner.start()
         print("[**] Creating DBF")
         dbf_1 = BloomFilter.DailyBloomFilter("DBF1")
         print(f"[**] Created {dbf_1.name}")
+        # TODO:::: This is fairly redundant test code
         print(f"[**] Updating {dbf_1.name}'s age")
-        dbf_1.update_age()
         print(f"[**] {dbf_1.name} AGE: {dbf_1.age}")
 
+        print(f"[**] Encoding test EncID: {TEST_ENC_ID}  into: {dbf_1.name}, with: {BloomFilter.HASH_ROUNDS} murmur "
+              f"hashes")
+
+        dbf_1.push(TEST_ENC_ID)
+
+        # TODO: Find out how to print the set indexes
+        print(f"[**] Current DBF State Post Insert: {[i[0] for i in enumerate(dbf_1.bit_array.tolist()) if i[1]]}")
+
+        print("\n[**] Starting CBF/DBF Upload Tests")
         print(f"[**] Sending CBF with garbage data")
         Network.send_cbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
         print(f"[**] Sending QBF with garbage data")
-        Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
+        # Network.send_qbf("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=")
 
         print("=" * (22 + len(" DBF Tests ")), "\n")
         run_tests() if test_selection != 5 else None  # test done
@@ -123,7 +141,7 @@ def run_tests():
         #     continue
 
         # TODO: resolve generation delay
-        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, 0)
+        broadcast_thread = Network.BroadcastRunner("BROADCAST_THREAD", eph_id.n_shares, eph_id.current_eph_id_hash, 0)
         broadcast_thread.start()
 
         receiver_thread_1.join()
@@ -154,14 +172,23 @@ def run_asst_cycle():
     print('\n<', ':' * section_head, '[TASK-3 :: SEGMENT-3 :: A:B:C]', ':' * section_head, '>\n')
 
     EPH_RUNNER = EphID.EphIDRunner("EPH_ID_THREAD", EPH_ID)
+    DBF_MANAGER = BloomFilter.DBFManager("DBF_MANGER_THREAD")           # Override default for testing
+    QBF_MANAGER = BloomFilter.QBFManager("QBF_MANAGER_THREAD", 300)     # Every 300 seconds send query
     RECEIVER_SVR = Network.ReceiverRunner("RECEIVER_THREAD", PROD)
-    BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, PROD)
+    BROADCAST_SVR = Network.BroadcastRunner("BROADCAST_THREAD", EPH_ID.n_shares, EPH_ID.current_eph_id_hash, PROD)
 
     EPH_RUNNER.start()
+    DBF_MANAGER.start()
+    QBF_MANAGER.start()
     RECEIVER_SVR.start()
     BROADCAST_SVR.start()
 
-    print("[>>] continued ...")
+    # print("[>>] continued ...")
+
+    # CREATE GENESIS DBF
+    BloomFilter.DEVICE_DBFS.append(BloomFilter.DailyBloomFilter("genesis_from_cold_start"))
+
+    # print(f"[**] Current DBF State Post Insert: {[i[0] for i in enumerate(dbf_1.bit_array.tolist()) if i[1]]}")
 
 
 def main():
