@@ -97,7 +97,8 @@ def integrity_check(advert_hash, recovered_ehp_id):
         current_dbf.push(str(encID))
         encID = None
         dh.delete_shared_key()
-        print(f"[>>] Checking that EncID has been deleted: Value of dh.get_shared_key is {dh.get_shared_key()} and value of EncID is {EncID}")
+        print(f"[>>] Checking that EncID has been deleted: Value of dh.get_shared_key is {dh.get_shared_key()} and "
+              f"value of EncID is {encID}")
     else:
         print("[>>] Integrity Check Failed, discard match")
         return

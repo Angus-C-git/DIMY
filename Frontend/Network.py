@@ -15,7 +15,7 @@ from Resolve import get_host_ip
 
 PORT = 2048
 PORT2 = 2049
-BROADCAST_IP = '192.168.4.255'  # Broadcast address (send to all clients)
+BROADCAST_IP = '192.168.8.5'  # Broadcast address (send to all clients)
 IP_LISTENER = get_host_ip()
 
 RECONSTRUCT_THRESHOLD = 3
@@ -59,7 +59,7 @@ class Dh:
     def receive_dh(self):
         rec_pub_key = None
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        listener = (BROADCAST_IP, PORT2)
+        listener = (IP_LISTENER, PORT2)
         sock.bind(listener)
 
         # print(f"[>>] DH Listener is live IP: <{IP_LISTENER}> PORT: <{PORT2}> Hostname: <{socket.gethostname()}>")
