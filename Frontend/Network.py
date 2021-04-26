@@ -68,12 +68,11 @@ def broadcast_share(shares, advert_hash, test_mode, cnt):
         # TODO: work out how to broadcast along the whole IP address block
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
 
-        # tmp_share = "some_share_n"
         print(f"[>>] Sending share => {shares[0]}")
-        # TODO: TMP send hash
         advertisement = f'{advert_hash}|{shares[0]}'
         # sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
         sock.sendto(advertisement.encode('ascii'), (IP_LISTENER, PORT))
+
         # remove the share we just broadcast
         shares.pop(0)
         if test_mode:
