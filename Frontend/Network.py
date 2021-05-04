@@ -15,11 +15,12 @@ from Resolve import get_host_ip
 
 PORT = 2048
 PORT2 = 2049
-BROADCAST_IP = '192.168.8.5'  # Broadcast address (send to all clients)
-IP_LISTENER = get_host_ip()
+BROADCAST_IP = '255.255.255.255'    # Broadcast address (send to all clients)
+IP_LISTENER = ''                    # bind default addr
+# IP_LISTENER = get_host_ip()       # Resolve current hosts IP
 
 RECONSTRUCT_THRESHOLD = 3
-BROADCAST_RATE = 10  # Broadcast one share/10 sec
+BROADCAST_RATE = 10                 # Broadcast one share/10 sec
 
 
 # =========================== Diffie Hellman ========================= #
@@ -54,6 +55,7 @@ class Dh:
 
     def send_dh(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(self.pub_key.encode('ascii'), (BROADCAST_IP, PORT2))
 
     def receive_dh(self):
@@ -132,20 +134,15 @@ def broadcast_share(shares, advert_hash, test_mode, cnt):
         return
 
     try:
-        # TODO: work out how to broadcast along the whole IP address block
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         print(f"[>>] Sending share => {shares[0]}")
         advertisement = f'{advert_hash}|{shares[0]}'
-        # sock.sendto(shares[0].encode('ascii'), (IP_LISTENER, PORT))  # TODO:::: THIS NEEDS TO BE BROADCAST
         sock.sendto(advertisement.encode('ascii'), (BROADCAST_IP, PORT))
 
         # remove the share we just broadcast
         shares.pop(0)
-        if test_mode:
-            cnt += 1
-            if cnt >= 3:
-                return
 
         # Broadcast one share/10s
         time.sleep(BROADCAST_RATE)
@@ -176,6 +173,7 @@ def receive_advertisements(test_mode):
     #    - Initialise Listener -    #
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     listener = (IP_LISTENER, PORT)
     sock.bind(listener)
 
